@@ -21,12 +21,6 @@ out vec2 TexCoords;
 out vec3 EPos;
 out vec3 Enorm;
 
-// layout(std140, binding = 0) uniform pvMatirix
-// {
-// 	mat4 projection;
-// 	mat4 view;
-// };
-
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;

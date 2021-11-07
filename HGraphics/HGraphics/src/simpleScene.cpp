@@ -40,18 +40,17 @@ SimpleScene::~SimpleScene()
 }
 
 SimpleScene::SimpleScene(int windowWidth, int windowHeight) :
-Scene(windowWidth, windowHeight), angleOfRotation(0.0f), La_(16, glm::vec3(1.f)), Ld_(16, glm::vec3(1.f)),
-Ls_(16, glm::vec3(1.f)), spotInner(16, 15.f), spotOuter(16, 20.f), spotFalloff(16, 1.f),
-currentLightType_(16 , "Point")
+    Scene(windowWidth, windowHeight), angleOfRotation(0.0f), La_(16, glm::vec3(1.f)), Ld_(16, glm::vec3(1.f)),
+    Ls_(16, glm::vec3(1.f)), spotInner(16, 15.f), spotOuter(16, 20.f), spotFalloff(16, 1.f),
+    currentLightType_(16, "Point"), lightType(16, 0)
 {
     initMembers();
-    screen_width = (float)windowWidth;
-    screen_height = (float)windowHeight;
+    screen_width = static_cast<float>(windowWidth);
+    screen_height = static_cast<float>(windowHeight);
 }
 
 void SimpleScene::initMembers()
 {
-    loadedModelName.clear();
     angleOfRotation = 0.0f;
     orbitRadius = 2.5f;
     camera_ = nullptr;
@@ -76,8 +75,7 @@ void SimpleScene::initMembers()
     currentLightNum = "Light#1";
     currentLightType = "Point";
     UVTypes = { "Cylindrical", "Spherical", "Cube", "None" };
-    currUVType = "Cube";
-    currentLightType_.resize(16);
+    currUVType = "Cylindrical";
     UVPipeline = { "CPU", "GPU" };
     currUVPipeline = "GPU";
     UVEntity = { "Position", "Normal" };
@@ -99,38 +97,38 @@ int SimpleScene::Init()
     lightSphereShader->loadShader("shader/lightSphere.vert",
         "shader/lightSphere.frag");
 
-    obj_manager_.loadOBJFile("models/bunny_high_poly.obj", "bunny_high_poly", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/cube.obj", "cube", true, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/4Sphere.obj", "4Sphere", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/bunny.obj", "bunny", false, Mesh::UVType::CUBE_MAPPED_UV);
+    obj_manager_.loadOBJFile("models/bunny_high_poly.obj", "bunny_high_poly", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/cube.obj", "cube", true, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/4Sphere.obj", "4Sphere", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/bunny.obj", "bunny", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/cup.obj", "cup", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/cube2.obj", "cube2", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/lucy_princeton.obj", "lucy_princeton", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/rhino.obj", "rhino", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/starwars1.obj", "starwars1", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/sphere.obj", "sphere", false, Mesh::UVType::CYLINDRICAL_UV);
+    obj_manager_.loadOBJFile("models/sphere_modified.obj", "sphere_modified", false, Mesh::UVType::CYLINDRICAL_UV);
 
     diffMap = obj_manager_.loadTexture("textures/metal_roof_diff_512x512.png");
     specMap = obj_manager_.loadTexture("textures/metal_roof_spec_512x512.png");
     gridMap = obj_manager_.loadTexture("textures/grid.png");
 
-    /*obj_manager_.loadOBJFile("models/cup.obj", "cup", false);
-    obj_manager_.loadOBJFile("models/cube2.obj", "cube2", false);
-    obj_manager_.loadOBJFile("models/lucy_princeton.obj", "lucy_princeton", false);
-    obj_manager_.loadOBJFile("models/rhino.obj", "rhino", false);
-    obj_manager_.loadOBJFile("models/starwars1.obj", "starwars1", false);
-    obj_manager_.loadOBJFile("models/sphere.obj", "sphere", false);
-    obj_manager_.loadOBJFile("models/sphere_modified.obj", "sphere_modified", false);*/
 
     obj_manager_.setupSphere("orbitSphere");
     obj_manager_.setupOrbitLine("orbitLine", orbitRadius);
     obj_manager_.setupPlane("plane");
+
     loadedModelName.emplace_back("bunny_high_poly");
     loadedModelName.emplace_back("cube");
     loadedModelName.emplace_back("4Sphere");
     loadedModelName.emplace_back("bunny");
-
-    /*loadedModelName.emplace_back("cup");
+    loadedModelName.emplace_back("cup");
     loadedModelName.emplace_back("cube2");
     loadedModelName.emplace_back("lucy_princeton");
     loadedModelName.emplace_back("rhino");
     loadedModelName.emplace_back("starwars1");
     loadedModelName.emplace_back("sphere");
-    loadedModelName.emplace_back("sphere_modified");*/
+    loadedModelName.emplace_back("sphere_modified");
 
     loadedShader.emplace_back("shader/phongShading");
     loadedShader.emplace_back("shader/phongLighting");
@@ -139,7 +137,6 @@ int SimpleScene::Init()
     currentModelName = loadedModelName[0];
     currentVShader = loadedShader[0] + ".vert";
     currentFShader = loadedShader[0] + ".frag";
-
     {
         unsigned int uniformBlockIndex = glGetUniformBlockIndex(mainShader->getHandle(), "pvMatirix");
         glUniformBlockBinding(mainShader->getHandle(), uniformBlockIndex, 0);
@@ -181,18 +178,9 @@ int SimpleScene::Render()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specMap);
     }
-    //glm::vec3 scaleVector = glm::vec3(obj_manager_.GetMesh(currentModelName)->getModelScaleRatio());
-    //glm::vec3 centroid = glm::vec3(0.f) - obj_manager_.GetMesh(currentModelName)->getModelCentroid();
     view = camera_->GetViewMatrix();
     projection = glm::perspective(glm::radians(camera_->Zoom), (float)screen_width / (float)screen_height, 0.1f,
                                   100.0f);
-    /*glBindBuffer(GL_UNIFORM_BUFFER, uboMatirices);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboMatirices);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);*/
-
     mainShader->use();
 
     model = glm::mat4(1.f);
@@ -240,58 +228,54 @@ int SimpleScene::Render()
 
     for(int i = 0; i < lightNum; ++i)
     {
-        std::stringstream pointLight;
-        std::stringstream dirLight;
-        std::stringstream spotLight;
+        std::stringstream Light;
 
-        pointLight << "pointLights[" << i << "].position";
-        dirLight << "dirLights[" << i << "].direction";
-        spotLight << "spotLights[" << i << "].position";
+        Light << "Lights[" << i << "].position";
 
         model = glm::mat4(1.f);
         lightPos = glm::vec4(1.f);
         model = glm::rotate(angleOfRotation, glm::vec3(0.0f, 1.0f, 0.0f)) *
             glm::translate(glm::vec3(cosf(glm::radians(360.f/static_cast<float>(lightNum) * i)) * orbitRadius, 0.3f,
             sinf(glm::radians(360.f / static_cast<float>(lightNum) * i)) * orbitRadius));
-        LightPositions[i] = model * lightPos;
-
+        LightPositions[i] = model[3];
         if (currentLightType_[i] == "Point")
         {
-            mainShader->SetUniform("lightType", 0);
-            mainShader->SetUniform(pointLight.str(), LightPositions[i]);
-            mainShader->SetUniform("pointLights[" + std::to_string(i) + "].ambient", La_[i]);
-            mainShader->SetUniform("pointLights[" + std::to_string(i) + "].diffuse", Ld_[i]);
-            mainShader->SetUniform("pointLights[" + std::to_string(i) + "].specular", Ls_[i]);
-            mainShader->SetUniform("pointLights[" + std::to_string(i) + "].constant", attConst[0]);
-            mainShader->SetUniform("pointLights[" + std::to_string(i) + "].linear", attConst[1]);
-            mainShader->SetUniform("pointLights[" + std::to_string(i) + "].quadratic", attConst[2]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].lightType", lightType[i]);
+            mainShader->SetUniform(Light.str(), LightPositions[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].ambient", La_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].diffuse", Ld_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].specular", Ls_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].constant", attConst[0]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].linear", attConst[1]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].quadratic", attConst[2]);
         }
 
         // directionLight
         else if (currentLightType_[i] == "Direction")
         {
-            mainShader->SetUniform("lightType", 1);
-            mainShader->SetUniform(dirLight.str(), LightPositions[i]);
-            mainShader->SetUniform("dirLights[" + std::to_string(i) + "].ambient", La_[i]);
-            mainShader->SetUniform("dirLights[" + std::to_string(i) + "].diffuse", Ld_[i]);
-            mainShader->SetUniform("dirLights[" + std::to_string(i) + "].specular", Ls_[i]);
+            mainShader->SetUniform(Light.str(), LightPositions[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].lightType", lightType[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].direction", LightPositions[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].ambient", La_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].diffuse", Ld_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].specular", Ls_[i]);
         }
 
         // spotLight
         else if (currentLightType_[i] == "Spot")
         {
-            mainShader->SetUniform("lightType", 2);
-            mainShader->SetUniform(spotLight.str(), LightPositions[i]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].direction", -LightPositions[i]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].ambient", La_[i]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].diffuse", Ld_[i]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].specular", Ls_[i]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].falloff", spotFalloff[i]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].constant", attConst[0]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].linear", attConst[1]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].quadratic", attConst[2]);
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].inner_angle", glm::cos(glm::radians(spotInner[i])));
-            mainShader->SetUniform("spotLights[" + std::to_string(i) + "].outer_angle", glm::cos(glm::radians(spotOuter[i])));
+            mainShader->SetUniform(Light.str(), LightPositions[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].lightType", lightType[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].direction", -LightPositions[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].ambient", La_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].diffuse", Ld_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].specular", Ls_[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].falloff", spotFalloff[i]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].constant", attConst[0]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].linear", attConst[1]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].quadratic", attConst[2]);
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].inner_angle", glm::cos(glm::radians(spotInner[i])));
+            mainShader->SetUniform("Lights[" + std::to_string(i) + "].outer_angle", glm::cos(glm::radians(spotOuter[i])));
         }
     }
     obj_manager_.GetMesh(currentModelName)->render();
@@ -560,7 +544,7 @@ void SimpleScene::RenderImGUI()
     {
         ImGui::DragFloat3("Attenuation Constant", attConst, 0.01f, 0.0f, 2.0f);
         ImGui::ColorEdit3("Global Ambient", reinterpret_cast<float*>(&globalAmbient));
-        ImGui::ColorEdit3("Background Color", reinterpret_cast<float*>(&fogColor));
+        ImGui::ColorEdit3("Fog Color", reinterpret_cast<float*>(&fogColor));
         ImGui::DragFloat("Fog Min", &fogMinDist, 0.1f);
         ImGui::DragFloat("Fog Max", &fogMaxDist, 0.1f);
     }
@@ -575,8 +559,6 @@ void SimpleScene::RenderImGUI()
     {
         ImGui::SliderInt("Light Count", &lightNum, 1, 16);
 
-        std::vector<bool> collapse(16, false);
-
         ImGui::Text("Light Orbit");
         ImGui::Checkbox("Orbit Enabled", &bRotate);
 
@@ -585,6 +567,7 @@ void SimpleScene::RenderImGUI()
         {
             lightNum = 6;
             currentLightType_[0] = "Point";
+            lightType[0] = 0;
             La_[0] = glm::vec3(1.f);
             Ld_[0] = glm::vec3(1.f);
             Ls_[0] = glm::vec3(1.f);
@@ -593,26 +576,32 @@ void SimpleScene::RenderImGUI()
             Ld_[1] = glm::vec3(1.f);
             Ls_[1] = glm::vec3(1.f);
             currentLightType_[1] = "Point";
+            lightType[1] = 0;
 
             La_[2] = glm::vec3(1.f);
             Ld_[2] = glm::vec3(1.f);
             Ls_[2] = glm::vec3(1.f);
             currentLightType_[2] = "Point";
+            lightType[2] = 0;
 
             La_[3] = glm::vec3(1.f);
             Ld_[3] = glm::vec3(1.f);
             Ls_[3] = glm::vec3(1.f);
             currentLightType_[3] = "Point";
+            lightType[3] = 0;
 
             La_[4] = glm::vec3(1.f);
             Ld_[4] = glm::vec3(1.f);
             Ls_[4] = glm::vec3(1.f);
             currentLightType_[4] = "Point";
+            lightType[4] = 0;
 
             La_[5] = glm::vec3(1.f);
             Ld_[5] = glm::vec3(1.f);
             Ls_[5] = glm::vec3(1.f);
             currentLightType_[5] = "Point";
+            lightType[5] = 0;
+
             scenario = 0;
         }
         ImGui::SameLine();
@@ -620,6 +609,7 @@ void SimpleScene::RenderImGUI()
         {
             lightNum = 7;
             currentLightType_[0] = "Spot";
+            lightType[0] = 2;
             La_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ld_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ls_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
@@ -628,31 +618,38 @@ void SimpleScene::RenderImGUI()
             Ld_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             Ls_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             currentLightType_[1] = "Spot";
+            lightType[1] = 2;
 
             La_[2] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ld_[2] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ls_[2] = glm::vec3(0.956f, 0.056f, 0.056f);
             currentLightType_[2] = "Spot";
+            lightType[2] = 2;
 
             La_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             currentLightType_[3] = "Spot";
+            lightType[3] = 2;
 
             La_[4] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ld_[4] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ls_[4] = glm::vec3(0.113f, 0.887f, 0.705f);
             currentLightType_[4] = "Spot";
+            lightType[4] = 2;
 
             La_[5] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ld_[5] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ls_[5] = glm::vec3(0.887f, 0.842f, 0.113f);
             currentLightType_[5] = "Spot";
+            lightType[5] = 2;
 
             La_[6] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ld_[6] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ls_[6] = glm::vec3(0.887f, 0.409f, 0.113f);
             currentLightType_[6] = "Spot";
+            lightType[6] = 2;
+
             scenario = 0;
         }
         ImGui::SameLine();
@@ -660,6 +657,7 @@ void SimpleScene::RenderImGUI()
         {
             lightNum = 11;
             currentLightType_[0] = "Point";
+            lightType[0] = 0;
             La_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ld_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ls_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
@@ -668,63 +666,65 @@ void SimpleScene::RenderImGUI()
             Ld_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             Ls_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             currentLightType_[1] = "Direction";
+            lightType[1] = 1;
 
             La_[2] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ld_[2] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ls_[2] = glm::vec3(0.887f, 0.409f, 0.113f);
             currentLightType_[2] = "Spot";
+            lightType[2] = 2;
 
             La_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
-            currentLightType_[3] = "Spot";
+            currentLightType_[3] = "Point";
+            lightType[3] = 0;
 
             La_[4] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ld_[4] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ls_[4] = glm::vec3(0.887f, 0.842f, 0.113f);
             currentLightType_[4] = "Spot";
+            lightType[4] = 2;
 
             La_[5] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ld_[5] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ls_[5] = glm::vec3(0.113f, 0.887f, 0.705f);
             currentLightType_[5] = "Spot";
+            lightType[5] = 2;
 
             La_[6] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[6] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[6] = glm::vec3(0.795f, 0.113f, 0.887f);
             currentLightType_[6] = "Point";
+            lightType[6] = 0;
 
             La_[7] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[7] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[7] = glm::vec3(0.795f, 0.113f, 0.887f);
-            currentLightType_[7] = "Point";
+            currentLightType_[7] = "Spot";
+            lightType[7] = 2;
 
             La_[8] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ld_[8] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ls_[8] = glm::vec3(0.113f, 0.887f, 0.705f);
-            currentLightType_[8] = "Point";
+            currentLightType_[8] = "Spot";
+            lightType[8] = 2;
 
             La_[9] = glm::vec3(0.887f, 0.113f, 0.864f);
             Ld_[9] = glm::vec3(0.887f, 0.113f, 0.8);
             Ls_[9] = glm::vec3(0.887f, 0.113f, 0.8);
             currentLightType_[9] = "Point";
+            lightType[9] = 0;
 
             La_[10] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ld_[10] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ls_[10] = glm::vec3(0.956f, 0.056f, 0.056f);
-            currentLightType_[10] = "Point";
+            currentLightType_[10] = "Spot";
+            lightType[10] = 2;
 
             scenario = 0;
         }
 
-        /*int i = 0;
-        std::stringstream Lights;
-
-        Lights << "Light #" << i + 1;
-        if (ImGui::CollapsingHeader(Lights.str().c_str()))
-        {
-            
-        }*/
         std::string selectedLight;
         static const char* currLightNum = currentLightNum.c_str();
         if (ImGui::BeginCombo("Select Light", currLightNum))
@@ -758,6 +758,13 @@ void SimpleScene::RenderImGUI()
                 if (ImGui::Selectable(light.c_str(), is_selected))
                 {
                     currentLightType_[selectedLightNum] = light;
+
+                    if (light == "Point")
+                        lightType[selectedLightNum] = 0;
+                    else if (light == "Direction")
+                        lightType[selectedLightNum] = 1;
+                    else if (light == "Spot")
+                        lightType[selectedLightNum] = 2;
                     currentLight = light.c_str();
                 }
                 if (is_selected)

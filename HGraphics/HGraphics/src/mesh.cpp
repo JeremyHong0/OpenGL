@@ -363,7 +363,7 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
     return rFlag;
 }
 
-void Mesh::calcVertexNormalsForDisplay(GLboolean bFlipNormals)
+void Mesh::calcVertexNormalsForDisplay()
 {
     GLuint numVertices = getVertexCount();
     vertexNormalDisplay.resize(static_cast<__int64>(numVertices) * 2, glm::vec3(0.0f));

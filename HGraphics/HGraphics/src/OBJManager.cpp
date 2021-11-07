@@ -142,7 +142,7 @@ unsigned int OBJManager::loadTexture(char const* filepath)
 
 GLuint OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType)
 {
-    GLuint rFlag = -1;
+    const GLuint rFlag = static_cast<GLuint>(-1);
     Mesh* mesh = new Mesh();
 
     if (ReadOBJFile(fileName, mesh, uvType, OBJManager::ReadMethod::LINE_BY_LINE, bNormalFlag) != 1.0)

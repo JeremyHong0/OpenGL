@@ -66,7 +66,7 @@ public:
     int calcVertexNormals(GLboolean bFlipNormals = false);
 
     // calculate the "display" normals
-    void calcVertexNormalsForDisplay(GLboolean bFlipNormals = false);
+    void calcVertexNormalsForDisplay();
 
     // calculate texture coordinates
     enum class UVType

@@ -115,12 +115,10 @@ private:
     std::vector<std::string> LightNums;
 
     glm::vec3 LightPositions[16];
-    glm::vec3 La = glm::vec3(1.f);
-    glm::vec3 Ld = glm::vec3(1.f);
-    glm::vec3 Ls = glm::vec3(1.f);
     std::vector<glm::vec3> La_;
     std::vector<glm::vec3> Ld_;
     std::vector<glm::vec3> Ls_;
+    std::vector<int> lightType;
     std::vector<float> spotInner;
     std::vector<float> spotOuter;
     std::vector<float> spotFalloff;

@@ -13,58 +13,13 @@ End Header ---------------------------------------------------------*/
 #version 450 core
 out vec4 FragColor;
 
-struct Light {
-	uint type;
-	vec3 direction;
-	vec3 position;
-
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	vec3 c;
-	float inner_angle;
-	float outer_angle;
-	float falloff;
-};
-
-layout(std140, binding = 1) uniform LightInformation
-{	
-	uint light_number;
-	float near;
-	float far;	
-	vec3 view_position;
-	vec3 fog_color;
-	vec3 global_ambient_color;
-    Light light[16];
-};
-
 struct Material {
     sampler2D diffuse;
     sampler2D specular;
     sampler2D grid;
 }; 
 
-struct DirLight {
-    vec3 direction;
-	
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
-struct PointLight {
-    vec3 position;
-    
-    float constant;
-    float linear;
-    float quadratic;
-	
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
-struct SpotLight {
+struct Light {
     vec3 position;
     vec3 direction;
     float inner_angle;
@@ -77,7 +32,9 @@ struct SpotLight {
   
     vec3 ambient;
     vec3 diffuse;
-    vec3 specular;       
+    vec3 specular;   
+
+    int lightType;    
 };
 
 uniform struct FogInfo {
@@ -96,15 +53,13 @@ in vec3 Enorm;
 
 uniform vec3 globalAmbient;
 uniform vec3 Emissive;
-uniform vec3 viewPos;
-uniform vec3 min_;
-uniform vec3 max_;
 uniform vec3 Ka;
 uniform vec3 Kd;
 uniform vec3 Ks;
-uniform DirLight dirLights[NR_POINT_LIGHTS];
-uniform PointLight pointLights[NR_POINT_LIGHTS];
-uniform SpotLight spotLights[NR_POINT_LIGHTS];
+uniform vec3 viewPos;
+uniform vec3 min_;
+uniform vec3 max_;
+uniform Light Lights[NR_POINT_LIGHTS];
 uniform Material material;
 uniform int lightNum;
 uniform int lightType;
@@ -114,17 +69,17 @@ uniform bool bShowUV;
 uniform bool bModel;
 uniform int mappingMode;
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 FragPos);
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 FragPos);
+vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
+
 
 vec2 calcCubeMap(vec3 vEntity);
 vec2 calcCylindricalUV(vec3 centVec);
 vec2 calcSphericalUV(vec3 centVec);
+vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir);
 
 vec2 FragTexCoord;
-
 void main()
 {    
     vec3 norm = normalize(Normal);
@@ -169,21 +124,21 @@ vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir)
     float fogFactor = (Fog.MaxDist - dist) /
                       (Fog.MaxDist - Fog.MinDist);
     vec3 result = vec3(0.f);
-    for(int i = 0; i < lightNum; i++)
+    for(int i = 0; i < lightNum; ++i)
     {
-        if(lightType == 0)
-            result += CalcPointLight(pointLights[i], normal, FragPos, viewDir);
-        if(lightType == 1)
-            result += CalcDirLight(dirLights[i], normal, viewDir, FragPos);
-        if(lightType == 2) 
-            result += CalcSpotLight(spotLights[i], normal, FragPos, viewDir);
+        if(Lights[i].lightType == 0)
+            result += CalcPointLight(Lights[i], normal, FragPos, viewDir);
+        else if(Lights[i].lightType == 1)
+            result += CalcDirLight(Lights[i], normal, viewDir, FragPos);
+        else if(Lights[i].lightType == 2)
+            result += CalcSpotLight(Lights[i], normal, FragPos, viewDir);
     }
     vec3 color = fogFactor * result + (1 - fogFactor) * Fog.Color;
     return color;
 }
 
 // calculates the color when using a directional light.
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
+vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
     vec3 lightDir = normalize(light.direction);
     // diffuse shading
@@ -228,7 +183,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 }
 
 // calculates the color when using a point light.
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
     vec3 lightDir = normalize(light.position - fragPos);
     vec3 opLightDir = -normalize(light.position - fragPos);
@@ -280,7 +235,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 }
 
 // calculates the color when using a spot light.
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
     vec3 lightDir = normalize(light.position - fragPos);
     // diffuse shading
