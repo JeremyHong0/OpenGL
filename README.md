@@ -1,6 +1,6 @@
 # OpenGL
 
-![](.git/images/demo.gif)
+![](.github/images/demo.gif)
 
 3D Graphics Framework:
 
