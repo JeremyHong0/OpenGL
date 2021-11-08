@@ -6,7 +6,7 @@ File Name: LineMesh.h
 Purpose: This file is header for line mesh.
 Language: c++
 Platform: VS2019 / Window
-Project:  s.hong_CS300_1
+Project:  HGraphics
 Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/

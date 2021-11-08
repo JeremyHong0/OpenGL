@@ -5,8 +5,8 @@ consent of DigiPen Institute of Technology is prohibited.
 File Name: normalShader.frag
 Purpose: This file is fragment shader for rendering normal of vertexs and faces  
 Language: glsl
-Platform: OpenGL 4.0
-Project:  s.hong_CS300_1
+Platform: OpenGL 4.5
+Project:  HGraphics
 Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/

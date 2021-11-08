@@ -107,6 +107,6 @@ c. File Location:
    - normalShader.frag
    - shader.vert
    - shader.frag
-d. Tested on Window10 machine with GTX1660ti & OpenGL4.6
+d. Tested on Window10 machine with GTX1660ti & OpenGL4.6 driver
 e. The number of hours you spent : 6H per week. Worked for 3 weeks.
 f. WASD for camera movement. QE for camera yaw.

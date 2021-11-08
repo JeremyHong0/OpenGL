@@ -2,11 +2,11 @@
 Copyright (C) 2021 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the prior written
 consent of DigiPen Institute of Technology is prohibited.
-File Name: shader.vert
+File Name: phongLighting.vert
 Purpose: This file is vertex shader for rendering loaded models
 Language: glsl
-Platform: OpenGL 4.0
-Project:  s.hong_CS300_1
+Platform: OpenGL 4.5
+Project:  HGraphics
 Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/
@@ -78,11 +78,12 @@ uniform int mappingMode;
 vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 FragPos);
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir);
 
 vec2 calcCubeMap(vec3 vEntity);
 vec2 calcCylindricalUV(vec3 centVec);
 vec2 calcSphericalUV(vec3 centVec);
-vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir);
+vec2 calcPlanarUV(vec3 centVec);
 
 uniform mat3 normalMatrix;
 uniform mat4 model;
@@ -117,6 +118,9 @@ void main(){
             case 2:
                 FragTexCoord = calcCubeMap(EntityPos);
                 break;
+            case 3:
+                FragTexCoord = calcPlanarUV(EntityPos);
+                break;
         }
     }
     else
@@ -135,7 +139,7 @@ void main(){
 vec3 CalcFog(vec3 normal, vec3 vertPos, vec3 viewDir)
 {
     float dist = length( viewPos );
-    float fogFactor = (Fog.MaxDist - dist) /
+    float fogFactor = max((Fog.MaxDist - dist), 0.0001) /
                       (Fog.MaxDist - Fog.MinDist);
     vec3 result = vec3(0.f);
     for(int i = 0; i < lightNum; ++i)
@@ -267,7 +271,7 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
         spec = 0.f;
     // attenuation
     float distance = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.falloff + light.linear * distance + light.quadratic * (distance * distance));    
+    float attenuation= min(1.0 / (light.falloff + light.linear * distance + light.quadratic * (distance * distance)), 1.0);
     // spotlight intensity
     float theta = dot(-lightDir, normalize(light.direction)); 
     float epsilon = light.inner_angle - light.outer_angle;
@@ -300,7 +304,7 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;
     specular *= attenuation * intensity;
-    return (diffuse + specular);
+    return (ambient + diffuse + specular);
 }
 vec2 calcCylindricalUV(vec3 centVec)
 {
@@ -403,4 +407,8 @@ vec2 calcCubeMap(vec3 vEntity)
     uv.t = 0.5f * (vc + 1.0f);
 
     return uv;
+}
+vec2 calcPlanarUV(vec3 centVec)
+{
+    return vec2(centVec.x - (-1.f) / (2.f), centVec.y - (-1.f) / (2.f));
 }

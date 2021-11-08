@@ -6,7 +6,7 @@ File Name: simpleScene.h
 Purpose: This file is header for simple scene.
 Language: c++
 Platform: VS2019 / Window
-Project:  s.hong_CS300_1
+Project:  HGraphics
 Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/
@@ -22,7 +22,6 @@ End Header ---------------------------------------------------------*/
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
-#include "LightManager.h"
 #include "Camera.h"
 #include "mesh.h"
 #include "OBJManager.h"
@@ -53,9 +52,6 @@ private:
     std::unique_ptr<Shader> mainShader;
     std::unique_ptr<Shader> drawNormalShader;
     std::unique_ptr<Shader> lightSphereShader;
-    std::unique_ptr<Light> light_;
-
-    std::vector<Light> lights_;
 
     std::unique_ptr<Camera> camera_;
 
@@ -89,7 +85,6 @@ private:
 
     float orbitRadius;
 
-    int scenario = 0;
     int selectedLightNum = 0;
     float normalSize;
     bool bShowVNormal;
@@ -138,6 +133,13 @@ private:
     std::string currUVPipeline;
     std::vector<std::string> UVEntity;
     std::string currUVEntity;
+
+    enum eLightTypes
+    {
+        Point = 0,
+        Direction,
+        Spot
+    };
 };
 
 

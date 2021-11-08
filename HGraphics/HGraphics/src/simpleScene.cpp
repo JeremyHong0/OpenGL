@@ -6,7 +6,7 @@ File Name: simpleScene.cpp
 Purpose: This file generate scene to load/render models.
 Language: c++
 Platform: VS2019 / Window
-Project:  s.hong_CS300_1
+Project:  HGraphics
 Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/
@@ -25,7 +25,6 @@ const char* glsl_version = "#version 400";
 
 SimpleScene::~SimpleScene()
 {
-    initMembers();
     camera_ = nullptr;
     mainShader = nullptr;
     drawNormalShader = nullptr;
@@ -37,6 +36,7 @@ SimpleScene::~SimpleScene()
     loadedShader.clear();
     LightNums.clear();
     currentLightType.clear();
+    initMembers();
 }
 
 SimpleScene::SimpleScene(int windowWidth, int windowHeight) :
@@ -74,7 +74,7 @@ void SimpleScene::initMembers()
     "Light#9", "Light#10", "Light#11", "Light#12", "Light#13", "Light#14", "Light#15", "Light#16" };
     currentLightNum = "Light#1";
     currentLightType = "Point";
-    UVTypes = { "Cylindrical", "Spherical", "Cube", "None" };
+    UVTypes = { "Cylindrical", "Spherical", "Cube", "Planar", "None" };
     currUVType = "Cylindrical";
     UVPipeline = { "CPU", "GPU" };
     currUVPipeline = "GPU";
@@ -88,7 +88,6 @@ int SimpleScene::Init()
     mainShader = std::make_unique<Shader>();
     drawNormalShader = std::make_unique<Shader>();
     lightSphereShader = std::make_unique<Shader>();
-    lights_.emplace_back();
 
     mainShader->loadShader("shader/phongShading.vert",
         "shader/phongShading.frag");
@@ -289,7 +288,7 @@ int SimpleScene::Render()
                 obj_manager_.GetMesh(currentModelName)->clearVertexUVs();
                 obj_manager_.GetMesh(currentModelName)->setupMesh();    
             }
-            if (currUVType == "Cylindrical")
+            else if (currUVType == "Cylindrical")
             {
                 if (bCalcUVPos)
                 {
@@ -302,7 +301,7 @@ int SimpleScene::Render()
                     obj_manager_.GetMesh(currentModelName)->setupMesh();
                 }
             }
-            if (currUVType == "Spherical")
+            else if (currUVType == "Spherical")
             {
                 if (bCalcUVPos)
                 {
@@ -315,7 +314,7 @@ int SimpleScene::Render()
                     obj_manager_.GetMesh(currentModelName)->setupMesh();
                 }
             }
-            if (currUVType == "Cube")
+            else if (currUVType == "Cube")
             {
                 if (bCalcUVPos)
                 {
@@ -325,6 +324,19 @@ int SimpleScene::Render()
                 else
                 {
                     obj_manager_.GetMesh(currentModelName)->calcUVs(Mesh::UVType::CUBE_MAPPED_UV, false);
+                    obj_manager_.GetMesh(currentModelName)->setupMesh();
+                }
+            }
+            else if (currUVType == "Planar")
+            {
+                if (bCalcUVPos)
+                {
+                    obj_manager_.GetMesh(currentModelName)->calcUVs(Mesh::UVType::PLANAR_UV);
+                    obj_manager_.GetMesh(currentModelName)->setupMesh();
+                }
+                else
+                {
+                    obj_manager_.GetMesh(currentModelName)->calcUVs(Mesh::UVType::PLANAR_UV, false);
                     obj_manager_.GetMesh(currentModelName)->setupMesh();
                 }
             }
@@ -338,6 +350,8 @@ int SimpleScene::Render()
                 mainShader->SetUniform("mappingMode", 1);
             if (currUVType == "Cube")
                 mainShader->SetUniform("mappingMode", 2);
+            if (currUVType == "Planar")
+                mainShader->SetUniform("mappingMode", 3);
         }
         bReCalcUVs = false;
     }
@@ -487,6 +501,7 @@ void SimpleScene::RenderImGUI()
                 bool is_selected = currUVType == uv;
                 if (ImGui::Selectable(uv.c_str(), is_selected))
                 {
+                    bReCalcUVs = true;
                     currUVType = uv;
                     currentUV = uv.c_str();
                 }
@@ -503,6 +518,7 @@ void SimpleScene::RenderImGUI()
                 bool is_selected = currUVPipeline == mode;
                 if (ImGui::Selectable(mode.c_str(), is_selected))
                 {
+                    bReCalcUVs = true;
                     currUVPipeline = mode;
                     calcUVMode = mode.c_str();
                     if (currUVPipeline == "GPU")
@@ -523,6 +539,7 @@ void SimpleScene::RenderImGUI()
                 bool is_selected = currUVEntity == mode;
                 if (ImGui::Selectable(mode.c_str(), is_selected))
                 {
+                    bReCalcUVs = true;
                     currUVEntity = mode;
                     calcUVEntitiy = mode.c_str();
                     if (currUVEntity == "Position")
@@ -566,98 +583,95 @@ void SimpleScene::RenderImGUI()
         if (ImGui::Button("Scenario 1"))
         {
             lightNum = 6;
-            currentLightType_[0] = "Point";
-            lightType[0] = 0;
             La_[0] = glm::vec3(1.f);
             Ld_[0] = glm::vec3(1.f);
             Ls_[0] = glm::vec3(1.f);
+            currentLightType_[0] = "Point";
+            lightType[0] = Point;
 
             La_[1] = glm::vec3(1.f);
             Ld_[1] = glm::vec3(1.f);
             Ls_[1] = glm::vec3(1.f);
             currentLightType_[1] = "Point";
-            lightType[1] = 0;
+            lightType[1] = Point;
 
             La_[2] = glm::vec3(1.f);
             Ld_[2] = glm::vec3(1.f);
             Ls_[2] = glm::vec3(1.f);
             currentLightType_[2] = "Point";
-            lightType[2] = 0;
+            lightType[2] = Point;
 
             La_[3] = glm::vec3(1.f);
             Ld_[3] = glm::vec3(1.f);
             Ls_[3] = glm::vec3(1.f);
             currentLightType_[3] = "Point";
-            lightType[3] = 0;
+            lightType[3] = Point;
 
             La_[4] = glm::vec3(1.f);
             Ld_[4] = glm::vec3(1.f);
             Ls_[4] = glm::vec3(1.f);
             currentLightType_[4] = "Point";
-            lightType[4] = 0;
+            lightType[4] = Point;
 
             La_[5] = glm::vec3(1.f);
             Ld_[5] = glm::vec3(1.f);
             Ls_[5] = glm::vec3(1.f);
             currentLightType_[5] = "Point";
-            lightType[5] = 0;
-
-            scenario = 0;
+            lightType[5] = Point;
         }
         ImGui::SameLine();
         if (ImGui::Button("Scenario 2"))
         {
             lightNum = 7;
-            currentLightType_[0] = "Spot";
-            lightType[0] = 2;
             La_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ld_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ls_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
+            currentLightType_[0] = "Spot";
+            lightType[0] = Spot;
 
             La_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             Ld_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             Ls_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             currentLightType_[1] = "Spot";
-            lightType[1] = 2;
+            lightType[1] = Spot;
 
             La_[2] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ld_[2] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ls_[2] = glm::vec3(0.956f, 0.056f, 0.056f);
             currentLightType_[2] = "Spot";
-            lightType[2] = 2;
+            lightType[2] = Spot;
 
             La_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             currentLightType_[3] = "Spot";
-            lightType[3] = 2;
+            lightType[3] = Spot;
 
             La_[4] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ld_[4] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ls_[4] = glm::vec3(0.113f, 0.887f, 0.705f);
             currentLightType_[4] = "Spot";
-            lightType[4] = 2;
+            lightType[4] = Spot;
 
             La_[5] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ld_[5] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ls_[5] = glm::vec3(0.887f, 0.842f, 0.113f);
             currentLightType_[5] = "Spot";
-            lightType[5] = 2;
+            lightType[5] = Spot;
 
             La_[6] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ld_[6] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ls_[6] = glm::vec3(0.887f, 0.409f, 0.113f);
             currentLightType_[6] = "Spot";
-            lightType[6] = 2;
+            lightType[6] = Spot;
 
-            scenario = 0;
         }
         ImGui::SameLine();
         if (ImGui::Button("Scenario 3"))
         {
             lightNum = 11;
             currentLightType_[0] = "Point";
-            lightType[0] = 0;
+            lightType[0] = Point;
             La_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ld_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
             Ls_[0] = glm::vec3(0.230f, 0.917f, 0.081f);
@@ -666,63 +680,62 @@ void SimpleScene::RenderImGUI()
             Ld_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             Ls_[1] = glm::vec3(0.086f, 0.350f, 0.971f);
             currentLightType_[1] = "Direction";
-            lightType[1] = 1;
+            lightType[1] = Direction;
 
             La_[2] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ld_[2] = glm::vec3(0.887f, 0.409f, 0.113f);
             Ls_[2] = glm::vec3(0.887f, 0.409f, 0.113f);
             currentLightType_[2] = "Spot";
-            lightType[2] = 2;
+            lightType[2] = Spot;
 
             La_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[3] = glm::vec3(0.795f, 0.113f, 0.887f);
             currentLightType_[3] = "Point";
-            lightType[3] = 0;
+            lightType[3] = Point;
 
             La_[4] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ld_[4] = glm::vec3(0.887f, 0.842f, 0.113f);
             Ls_[4] = glm::vec3(0.887f, 0.842f, 0.113f);
             currentLightType_[4] = "Spot";
-            lightType[4] = 2;
+            lightType[4] = Spot;
 
             La_[5] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ld_[5] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ls_[5] = glm::vec3(0.113f, 0.887f, 0.705f);
             currentLightType_[5] = "Spot";
-            lightType[5] = 2;
+            lightType[5] = Spot;
 
             La_[6] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[6] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[6] = glm::vec3(0.795f, 0.113f, 0.887f);
             currentLightType_[6] = "Point";
-            lightType[6] = 0;
+            lightType[6] = Point;
 
             La_[7] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ld_[7] = glm::vec3(0.795f, 0.113f, 0.887f);
             Ls_[7] = glm::vec3(0.795f, 0.113f, 0.887f);
             currentLightType_[7] = "Spot";
-            lightType[7] = 2;
+            lightType[7] = Spot;
 
             La_[8] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ld_[8] = glm::vec3(0.113f, 0.887f, 0.705f);
             Ls_[8] = glm::vec3(0.113f, 0.887f, 0.705f);
             currentLightType_[8] = "Spot";
-            lightType[8] = 2;
+            lightType[8] = Spot;
 
             La_[9] = glm::vec3(0.887f, 0.113f, 0.864f);
             Ld_[9] = glm::vec3(0.887f, 0.113f, 0.8);
             Ls_[9] = glm::vec3(0.887f, 0.113f, 0.8);
             currentLightType_[9] = "Point";
-            lightType[9] = 0;
+            lightType[9] = Point;
 
             La_[10] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ld_[10] = glm::vec3(0.956f, 0.056f, 0.056f);
             Ls_[10] = glm::vec3(0.956f, 0.056f, 0.056f);
             currentLightType_[10] = "Spot";
-            lightType[10] = 2;
+            lightType[10] = Spot;
 
-            scenario = 0;
         }
 
         std::string selectedLight;
@@ -760,11 +773,12 @@ void SimpleScene::RenderImGUI()
                     currentLightType_[selectedLightNum] = light;
 
                     if (light == "Point")
-                        lightType[selectedLightNum] = 0;
+                        lightType[selectedLightNum] = Point;
                     else if (light == "Direction")
-                        lightType[selectedLightNum] = 1;
+                        lightType[selectedLightNum] = Direction;
                     else if (light == "Spot")
-                        lightType[selectedLightNum] = 2;
+                        lightType[selectedLightNum] = Spot;
+
                     currentLight = light.c_str();
                 }
                 if (is_selected)

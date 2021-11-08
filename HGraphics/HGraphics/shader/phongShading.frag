@@ -2,11 +2,11 @@
 Copyright (C) 2021 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the prior written
 consent of DigiPen Institute of Technology is prohibited.
-File Name: shader.frag
+File Name: phongShading.frag
 Purpose: This file is fragment shader for rendering loaded models
 Language: glsl
-Platform: OpenGL 4.0
-Project:  s.hong_CS300_1
+Platform: OpenGL 4.5
+Project:  HGraphics
 Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/
@@ -72,12 +72,12 @@ uniform int mappingMode;
 vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 FragPos);
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
-
+vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir);
 
 vec2 calcCubeMap(vec3 vEntity);
 vec2 calcCylindricalUV(vec3 centVec);
 vec2 calcSphericalUV(vec3 centVec);
-vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir);
+vec2 calcPlanarUV(vec3 centVec);
 
 vec2 FragTexCoord;
 
@@ -105,6 +105,9 @@ void main()
             case 2:
                 FragTexCoord = calcCubeMap(EntityPos);
                 break;
+            case 3:
+                FragTexCoord = calcPlanarUV(EntityPos);
+                break;
         }
     }
     else
@@ -121,7 +124,8 @@ void main()
 vec3 CalcFog(vec3 normal, vec3 fragPos, vec3 viewDir)
 {
     float dist = length( viewPos );
-    float fogFactor = (Fog.MaxDist - dist) /
+    
+    float fogFactor = max((Fog.MaxDist - dist), 0.0001) /
                       (Fog.MaxDist - Fog.MinDist);
     vec3 result = vec3(0.f);
     for(int i = 0; i < lightNum; ++i)
@@ -149,7 +153,7 @@ vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 fragPos)
     if(dot(normal, lightDir) > 0.0)
     {
         Ks_r = texture(material.specular, FragTexCoord).r;
-        spec = pow(max(dot(viewDir, reflectDir), 0.0), Ks_r * Ks_r * 32 + 0.00001);
+        spec = pow(max(dot(viewDir, reflectDir), 0.0), Ks_r * Ks_r * 32);
     }
     else
         spec = 0.f;
@@ -195,7 +199,7 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
     if(dot(normal, lightDir) > 0.0)
     {
         Ks_r = texture(material.specular, FragTexCoord).r;
-        spec = pow(max(dot(viewDir, reflectDir), 0.0), Ks_r*Ks_r*32+0.00001);
+        spec = pow(max(dot(viewDir, reflectDir), 0.0), Ks_r*Ks_r*32);
     }
     else 
         spec = 0.f;
@@ -248,17 +252,18 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
     if(dot(normal, lightDir) > 0.0)
     {
         Ks_r = texture(material.specular, FragTexCoord).r;
-        spec = pow(max(dot(viewDir, reflectDir), 0.0), Ks_r*Ks_r*32+0.00001);
+        spec = pow(max(dot(viewDir, reflectDir), 0.0), Ks_r*Ks_r*32);
     }
     else
         spec = 0.f;
     // attenuation
     float distance = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.falloff + light.linear * distance + light.quadratic * (distance * distance));    
+    float attenuation= min(1.0 / (light.falloff + light.linear * distance + light.quadratic * (distance * distance)), 1.0);
     // spotlight intensity
     float theta = dot(-lightDir, normalize(light.direction)); 
     float epsilon = light.inner_angle - light.outer_angle;
     float intensity = clamp((theta - light.outer_angle) / epsilon, 0.0, 1.0);
+
     // combine results
     vec3 ambient;
     vec3 diffuse;
@@ -284,11 +289,11 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
         diffuse = light.diffuse * diff;
         specular = light.specular * pow(max(dot(viewDir, reflectDir),0.0),32);
     }
-    
+
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;
     specular *= attenuation * intensity;
-    return (diffuse + specular);
+    return (ambient + diffuse + specular);
 }
 vec2 calcCylindricalUV(vec3 centVec)
 {
@@ -327,72 +332,6 @@ vec2 calcCubeMap(vec3 vEntity)
     float maxAxis, uc, vc;
     vec2 uv = vec2(0.0);
 
-    // // POSITIVE X
-    // if (bool(isXPositive) && (absX >= absY) && (absX >= absZ))
-    // {
-    //     // u (0 to 1) goes from +z to -z
-    //     // v (0 to 1) goes from -y to +y
-    //     maxAxis = absX;
-    //     uc = -z/absX;
-    //     vc = y/absX;
-    // }
-
-    //     // NEGATIVE X
-    // else if (!bool(isXPositive) && absX >= absY && absX >= absZ)
-    // {
-    //     // u (0 to 1) goes from -z to +z
-    //     // v (0 to 1) goes from -y to +y
-    //     maxAxis = absX;
-    //     uc = z/absX;
-    //     vc = y/absX;
-    // }
-
-    //     // POSITIVE Y
-    // else if (bool(isYPositive) && absY >= absX && absY >= absZ)
-    // {
-    //     // u (0 to 1) goes from -x to +x
-    //     // v (0 to 1) goes from +z to -z
-    //     maxAxis = absY;
-    //     uc = x/absY;
-    //     vc = -z/absY;
-    // }
-
-    //     // NEGATIVE Y
-    // else if (!bool(isYPositive) && absY >= absX && absY >= absZ)
-    // {
-    //     // u (0 to 1) goes from -x to +x
-    //     // v (0 to 1) goes from -z to +z
-    //     maxAxis = absY;
-    //     uc = x/absY;
-    //     vc = z/absY;
-    // }
-
-    //     // POSITIVE Z
-    // else if (bool(isZPositive) && absZ >= absX && absZ >= absY)
-    // {
-    //     // u (0 to 1) goes from -x to +x
-    //     // v (0 to 1) goes from -y to +y
-    //     maxAxis = absZ;
-    //     uc = x/absZ;
-    //     vc = y/absZ;
-    // }
-
-    //     // NEGATIVE Z
-    // else if (!bool(isZPositive) && absZ >= absX && absZ >= absY)
-    // {
-    //     // u (0 to 1) goes from +x to -x
-    //     // v (0 to 1) goes from -y to +y
-    //     maxAxis = absZ;
-    //     uc = -x/absZ;
-    //     vc = y/absZ;
-    // }
-
-    // // Convert range from -1 to 1 to 0 to 1
-    // uv.s = 0.5f * (uc + 1.0f);
-    // uv.t = 0.5f * (vc + 1.0f);
-
-    // return uv;
-
     if (absVec.x >= absVec.y && absVec.x >= absVec.z)
     {
         if(vEntity.x < 0)
@@ -418,4 +357,9 @@ vec2 calcCubeMap(vec3 vEntity)
         uv.y = vEntity.y/absVec.z;
     }
     return (uv+vec2(1))/2;
+}
+
+vec2 calcPlanarUV(vec3 centVec)
+{
+    return vec2(centVec.x - (-1.f) / (2.f), centVec.y - (-1.f) / (2.f));
 }

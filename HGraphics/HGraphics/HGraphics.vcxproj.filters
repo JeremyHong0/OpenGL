@@ -46,9 +46,6 @@
     <ClCompile Include="src\LineMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\LightManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.h">
@@ -103,9 +100,6 @@
       <Filter>Source Files\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\stb_image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\LightManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

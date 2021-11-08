@@ -6,7 +6,7 @@ File Name: mesh.cpp
 Purpose: This file setup buffers, calculate vertex normals/UVs, and render models
 Language: c++
 Platform: VS2019 / Window
-Project:  s.hong_CS300_1
+Project:  HGraphics
 Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/
@@ -424,8 +424,8 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
         switch (uvType)
         {
         case UVType::PLANAR_UV:
-            uv.x = (normVertex.x - (-1.0f)) / (2.0f);
-            uv.y = (normVertex.y - (-1.0f)) / (2.0f);
+            uv.x = (centroidVec.x - (-1.0f)) / (2.0f);
+            uv.y = (centroidVec.y - (-1.0f)) / (2.0f);
             break;
 
         case UVType::CYLINDRICAL_UV:
