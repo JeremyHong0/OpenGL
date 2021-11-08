@@ -1,4 +1,4 @@
-# OpenGL
+# HGraphics
 
 ![](.github/images/demo.gif)
 
