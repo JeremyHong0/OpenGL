@@ -14,41 +14,41 @@ End Header ---------------------------------------------------------*/
 
 LineMesh::LineMesh()
 {
-    VAO = 0;
-    VBO = 0;
-    vertexCount = 0;
-    EBO = 0;
+    vao_ = 0;
+    vbo_ = 0;
+    vertex_count_ = 0;
+    ebo_ = 0;
 }
 
 LineMesh::~LineMesh()
 {
-    vertexBuffer.clear();
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    vertex_buffer_.clear();
+    glDeleteBuffers(1, &vbo_);
+    glDeleteBuffers(1, &ebo_);
 }
 
 void LineMesh::render(int bFlag) const
 {
-    if (VAO == 0) return;
+    if (vao_ == 0) return;
 
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_LINE_LOOP, 0, vertexCount);
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_LINE_LOOP, 0, vertex_count_);
     glBindVertexArray(0);
 }
 
 void LineMesh::setupLineMesh()
 {
-    vertexCount = (GLuint)vertexBuffer.size();
+    vertex_count_ = (GLuint)vertex_buffer_.size();
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenVertexArrays(1, &vao_);
+    glGenBuffers(1, &vbo_);
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(vao_);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertexBuffer.size() * sizeof(GLfloat) * 3, vertexBuffer.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_.size() * sizeof(GLfloat) * 3, vertex_buffer_.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, static_cast<void*>(0));
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 

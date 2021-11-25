@@ -81,29 +81,28 @@ public:
     glm::vec2 calcCubeMap(glm::vec3 vEntity);
 
 private:
-    GLuint VAO;
-    GLuint vnormalVAO;
-    GLuint fnormalVAO;
+    GLuint vao_;
+    GLuint vnormal_vao_;
+    GLuint fnormal_vao_;
 
-    GLuint vertexCount;
-    GLuint faceCount;
+    GLuint vertex_count_;
+    GLuint face_count_;
 
-    GLuint VBO_pos;
-    GLuint VBO_norm;
-    GLuint VBO_uv;
+    GLuint vbo_pos_;
+    GLuint vbo_norm_;
+    GLuint vbo_uv_;
 
+    GLuint ebo_;
 
-    GLuint EBO;
+    std::vector<glm::vec3> face_centroid_;
 
-    std::vector<glm::vec3> faceCentroid;
+    std::vector<GLuint> vertex_indices_;
+    std::vector<glm::vec3> vertex_buffer_;
+    std::vector<glm::vec2> vertex_uv_;
+    std::vector<glm::vec3> vertex_normals_, vertex_normal_display_;
 
-    std::vector<GLuint> vertexIndices;
-    std::vector<glm::vec3> vertexBuffer;
-    std::vector<glm::vec2> vertexUVs;
-    std::vector<glm::vec3> vertexNormals, vertexNormalDisplay;
-
-    glm::vec3 boundingBox[2];
-    GLfloat normalLength;
+    glm::vec3 bounding_box_[2];
+    GLfloat normal_length_;
 };
 
 #endif

@@ -19,107 +19,107 @@ End Header ---------------------------------------------------------*/
 
 Mesh::Mesh()
 {
-    VAO = 0;
-    vnormalVAO = 0;
-    fnormalVAO = 0;
-    vertexCount = 0;
-    VBO_pos = 0;
-    VBO_norm = 0;
-    EBO = 0;
-    faceCount = 0;
-    normalLength = 1.00f;
-    boundingBox[0] = glm::vec3(0.f);
+    vao_ = 0;
+    vnormal_vao_ = 0;
+    fnormal_vao_ = 0;
+    vertex_count_ = 0;
+    vbo_pos_ = 0;
+    vbo_norm_ = 0;
+    ebo_ = 0;
+    face_count_ = 0;
+    normal_length_ = 1.00f;
+    bounding_box_[0] = glm::vec3(0.f);
     initData();
 }
 
 Mesh::~Mesh()
 {
     initData();
-    glDeleteBuffers(1, vertexIndices.data());
-    glDeleteBuffers(1, &VBO_pos);
-    glDeleteBuffers(1, &VBO_norm);
-    glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, vertex_indices_.data());
+    glDeleteBuffers(1, &vbo_pos_);
+    glDeleteBuffers(1, &vbo_norm_);
+    glDeleteBuffers(1, &ebo_);
 }
 
 void Mesh::initData()
 {
-    vertexBuffer.clear();
-    vertexIndices.clear();
-    vertexUVs.clear();
-    vertexNormals.clear();
-    vertexNormalDisplay.clear();
-    faceCentroid.clear();
+    vertex_buffer_.clear();
+    vertex_indices_.clear();
+    vertex_uv_.clear();
+    vertex_normals_.clear();
+    vertex_normal_display_.clear();
+    face_centroid_.clear();
 }
 
 void Mesh::render(int Flag) const
 {
-    if (VAO == 0) return;
+    if (vao_ == 0) return;
 
     if (Flag == 0)
     {
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(vao_);
+        glDrawElements(GL_TRIANGLES, vertex_count_, GL_UNSIGNED_INT, 0);
     }
     else if (Flag == 1)
     {
-        glBindVertexArray(vnormalVAO);
-        glDrawArrays(GL_LINES, 0, faceCount);
+        glBindVertexArray(vnormal_vao_);
+        glDrawArrays(GL_LINES, 0, face_count_);
     }
     else if (Flag == 2)
     {
-        glBindVertexArray(fnormalVAO);
-        glDrawArrays(GL_LINES, 0, faceCount);
+        glBindVertexArray(fnormal_vao_);
+        glDrawArrays(GL_LINES, 0, face_count_);
     }
     glBindVertexArray(0);
 }
 
 void Mesh::setupMesh()
 {
-    vertexCount = (GLuint)vertexIndices.size();
-    faceCount = getTriangleCount() * 2;
+    vertex_count_ = (GLuint)vertex_indices_.size();
+    face_count_ = getTriangleCount() * 2;
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO_pos);
-    glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, &vao_);
+    glGenBuffers(1, &vbo_pos_);
+    glGenBuffers(1, &ebo_);
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(vao_);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
-    glBufferData(GL_ARRAY_BUFFER, vertexBuffer.size() * sizeof(GLfloat) * 3, vertexBuffer.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_pos_);
+    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_.size() * sizeof(GLfloat) * 3, vertex_buffer_.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(GLuint), vertexIndices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertex_indices_.size() * sizeof(GLuint), vertex_indices_.data(), GL_STATIC_DRAW);
 
-    if (!vertexNormals.empty())
+    if (!vertex_normals_.empty())
     {
-        glGenBuffers(1, &VBO_norm);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO_norm);
-        glBufferData(GL_ARRAY_BUFFER, vertexNormals.size() * sizeof(GLfloat) * 3, vertexNormals.data(), GL_STATIC_DRAW);
+        glGenBuffers(1, &vbo_norm_);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_norm_);
+        glBufferData(GL_ARRAY_BUFFER, vertex_normals_.size() * sizeof(GLfloat) * 3, vertex_normals_.data(), GL_STATIC_DRAW);
     }
 
-    if (!vertexUVs.empty())
+    if (!vertex_uv_.empty())
     {
-        glGenBuffers(1, &VBO_uv);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO_uv);
-        glBufferData(GL_ARRAY_BUFFER, vertexUVs.size() * sizeof(GLfloat) * 2, vertexUVs.data(), GL_STATIC_DRAW);
+        glGenBuffers(1, &vbo_uv_);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_uv_);
+        glBufferData(GL_ARRAY_BUFFER, vertex_uv_.size() * sizeof(GLfloat) * 2, vertex_uv_.data(), GL_STATIC_DRAW);
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_pos_);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, static_cast<void*>(0));
 
-    if (!vertexNormals.empty())
+    if (!vertex_normals_.empty())
     {
-        glBindBuffer(GL_ARRAY_BUFFER, VBO_norm);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_norm_);
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, static_cast<void*>(0));
     }
 
-    if (!vertexUVs.empty())
+    if (!vertex_uv_.empty())
     {
-        glBindBuffer(GL_ARRAY_BUFFER, VBO_uv);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_uv_);
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, 0);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, static_cast<void*>(0));
     }
 
     glBindVertexArray(0);
@@ -127,43 +127,43 @@ void Mesh::setupMesh()
 
 void Mesh::setupVNormalMesh()
 {
-    glGenVertexArrays(1, &vnormalVAO);
-    glGenBuffers(1, &VBO_pos);
-    glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, &vnormal_vao_);
+    glGenBuffers(1, &vbo_pos_);
+    glGenBuffers(1, &ebo_);
 
-    glBindVertexArray(vnormalVAO);
+    glBindVertexArray(vnormal_vao_);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
-    glBufferData(GL_ARRAY_BUFFER, vertexNormalDisplay.size() * sizeof(GLfloat) * 3, vertexNormalDisplay.data(),
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_pos_);
+    glBufferData(GL_ARRAY_BUFFER, vertex_normal_display_.size() * sizeof(GLfloat) * 3, vertex_normal_display_.data(),
                  GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(GLuint), vertexIndices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertex_indices_.size() * sizeof(GLuint), vertex_indices_.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_pos_);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, static_cast<void*>(0));
 
     glBindVertexArray(0);
 }
 
 void Mesh::setupFNormalMesh()
 {
-    glGenVertexArrays(1, &fnormalVAO);
-    glGenBuffers(1, &VBO_pos);
-    glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, &fnormal_vao_);
+    glGenBuffers(1, &vbo_pos_);
+    glGenBuffers(1, &ebo_);
 
-    glBindVertexArray(fnormalVAO);
+    glBindVertexArray(fnormal_vao_);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
-    glBufferData(GL_ARRAY_BUFFER, faceCentroid.size() * sizeof(GLfloat) * 3, faceCentroid.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_pos_);
+    glBufferData(GL_ARRAY_BUFFER, face_centroid_.size() * sizeof(GLfloat) * 3, face_centroid_.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(GLuint), vertexIndices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertex_indices_.size() * sizeof(GLuint), vertex_indices_.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_pos_);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, static_cast<void*>(0));
 
     glBindVertexArray(0);
 }
@@ -171,37 +171,37 @@ void Mesh::setupFNormalMesh()
 
 GLfloat* Mesh::getVertexBuffer()
 {
-    return reinterpret_cast<GLfloat*>(vertexBuffer.data());
+    return reinterpret_cast<GLfloat*>(vertex_buffer_.data());
 }
 
 GLfloat* Mesh::getVertexNormals()
 {
-    return reinterpret_cast<GLfloat*>(vertexNormals.data());
+    return reinterpret_cast<GLfloat*>(vertex_normals_.data());
 }
 
 GLfloat* Mesh::getVertexUVs()
 {
-    return reinterpret_cast<GLfloat*>(vertexUVs.data());
+    return reinterpret_cast<GLfloat*>(vertex_uv_.data());
 }
 
 GLfloat* Mesh::getVertexNormalsForDisplay()
 {
-    return reinterpret_cast<GLfloat*>(vertexNormalDisplay.data());
+    return reinterpret_cast<GLfloat*>(vertex_normal_display_.data());
 }
 
 GLuint* Mesh::getIndexBuffer()
 {
-    return vertexIndices.data();
+    return vertex_indices_.data();
 }
 
 unsigned int Mesh::getVertexBufferSize()
 {
-    return (unsigned int)vertexBuffer.size();
+    return (unsigned int)vertex_buffer_.size();
 }
 
 unsigned int Mesh::getIndexBufferSize()
 {
-    return (unsigned int)vertexIndices.size();
+    return (unsigned int)vertex_indices_.size();
 }
 
 unsigned int Mesh::getTriangleCount()
@@ -216,12 +216,12 @@ unsigned int Mesh::getVertexCount()
 
 unsigned int Mesh::getVertexNormalCount()
 {
-    return (unsigned int)vertexNormalDisplay.size();
+    return (unsigned int)vertex_normal_display_.size();
 }
 
 glm::vec3 Mesh::getModelScale()
 {
-    glm::vec3 scale = boundingBox[1] - boundingBox[0];
+    glm::vec3 scale = bounding_box_[1] - bounding_box_[0];
 
     if (scale.x == 0.0)
         scale.x = 1.0;
@@ -237,7 +237,7 @@ glm::vec3 Mesh::getModelScale()
 
 glm::vec3 Mesh::getModelCentroid()
 {
-    return glm::vec3(boundingBox[0] + boundingBox[1]) * 0.5f;
+    return glm::vec3(bounding_box_[0] + bounding_box_[1]) * 0.5f;
 }
 
 glm::vec3 Mesh::getCentroidVector(glm::vec3 vVertex)
@@ -247,7 +247,7 @@ glm::vec3 Mesh::getCentroidVector(glm::vec3 vVertex)
 
 float Mesh::getModelScaleRatio()
 {
-    glm::vec3 scale = boundingBox[1] - boundingBox[0];
+    glm::vec3 scale = bounding_box_[1] - bounding_box_[0];
     float result = 0.f;
     result = glm::max(scale.x, scale.y);
     result = glm::max(result, scale.z);
@@ -256,12 +256,12 @@ float Mesh::getModelScaleRatio()
 
 glm::vec3 Mesh::getMinBound()
 {
-    return boundingBox[0];
+    return bounding_box_[0];
 }
 
 glm::vec3 Mesh::getMaxBound()
 {
-    return boundingBox[1];
+    return bounding_box_[1];
 }
 
 struct compareVec
@@ -280,7 +280,7 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
     int rFlag = -1;
 
     // vertices and indices must be populated
-    if (vertexBuffer.empty() || vertexIndices.empty())
+    if (vertex_buffer_.empty() || vertex_indices_.empty())
     {
         std::cout << "Cannot calculate vertex normals for empty mesh." << std::endl;
         return rFlag;
@@ -288,9 +288,9 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
 
     // Initialize vertex normals
     GLuint numVertices = getVertexCount();
-    vertexNormals.resize(numVertices, glm::vec3(0.0f));
-    vertexNormalDisplay.resize(static_cast<__int64>(numVertices) * 2, glm::vec3(0.0f));
-    faceCentroid.resize(static_cast<__int64>(getTriangleCount())* 2, glm::vec3(0.f));
+    vertex_normals_.resize(numVertices, glm::vec3(0.0f));
+    vertex_normal_display_.resize(static_cast<__int64>(numVertices) * 2, glm::vec3(0.0f));
+    face_centroid_.resize(static_cast<__int64>(getTriangleCount())* 2, glm::vec3(0.f));
 
     std::vector<std::set<glm::vec3, compareVec>> vNormalSet;
     vNormalSet.resize(numVertices);
@@ -298,15 +298,15 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
 
     // For every face
     int index = 0;
-    for (; index < vertexIndices.size();)
+    for (; index < vertex_indices_.size();)
     {
-        GLuint a = vertexIndices.at(index++);
-        GLuint b = vertexIndices.at(index++);
-        GLuint c = vertexIndices.at(index++);
+        GLuint a = vertex_indices_.at(index++);
+        GLuint b = vertex_indices_.at(index++);
+        GLuint c = vertex_indices_.at(index++);
 
-        glm::vec3 vA = vertexBuffer[a];
-        glm::vec3 vB = vertexBuffer[b];
-        glm::vec3 vC = vertexBuffer[c];
+        glm::vec3 vA = vertex_buffer_[a];
+        glm::vec3 vB = vertex_buffer_[b];
+        glm::vec3 vC = vertex_buffer_[c];
 
         // Edge vectors
         glm::vec3 E1 = vB - vA;
@@ -315,7 +315,7 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
         glm::vec3 N = glm::normalize(glm::cross(E1, E2));
 
         glm::vec3 faceCenter = (vA + vB + vC) / 3.f;
-        faceCentroid[static_cast<__int64>(static_cast<__int64>(index) / 3 - 1) * 2] = (faceCenter);
+        face_centroid_[static_cast<__int64>(static_cast<__int64>(index) / 3 - 1) * 2] = (faceCenter);
 
         glm::vec3 F1 = vA - faceCenter;
         glm::vec3 F2 = vB - faceCenter;
@@ -324,7 +324,7 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
         if (bFlipNormals)
             fN = fN * -1.0f;
 
-        faceCentroid[static_cast<__int64>(static_cast<__int64>(index) / 3 - 1) * 2 + 1] = (faceCenter) + normalLength * fN;
+        face_centroid_[static_cast<__int64>(static_cast<__int64>(index) / 3 - 1) * 2 + 1] = (faceCenter) + normal_length_ * fN;
 
         if (bFlipNormals)
             N = N * -1.0f;
@@ -348,13 +348,13 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
         }
 
         // save vertex normal
-        vertexNormals[i] = glm::normalize(vNormal);
+        vertex_normals_[i] = glm::normalize(vNormal);
 
         // save normal to display
-        glm::vec3 vA = vertexBuffer[i];
+        glm::vec3 vA = vertex_buffer_[i];
 
-        vertexNormalDisplay[2 * static_cast<__int64>(i)] = vA;
-        vertexNormalDisplay[(2 * static_cast<__int64>(i)) + 1] = vA + (normalLength * vertexNormals[i]);
+        vertex_normal_display_[2 * static_cast<__int64>(i)] = vA;
+        vertex_normal_display_[(2 * static_cast<__int64>(i)) + 1] = vA + (normal_length_ * vertex_normals_[i]);
     }
 
     // success
@@ -366,30 +366,30 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
 void Mesh::calcVertexNormalsForDisplay()
 {
     GLuint numVertices = getVertexCount();
-    vertexNormalDisplay.resize(static_cast<__int64>(numVertices) * 2, glm::vec3(0.0f));
+    vertex_normal_display_.resize(static_cast<__int64>(numVertices) * 2, glm::vec3(0.0f));
 
-    for (int iNormal = 0; iNormal < vertexNormals.size(); ++iNormal)
+    for (int iNormal = 0; iNormal < vertex_normals_.size(); ++iNormal)
     {
-        glm::vec3 normal = vertexNormals[iNormal] * normalLength;
+        glm::vec3 normal = vertex_normals_[iNormal] * normal_length_;
 
-        vertexNormalDisplay[2 * static_cast<__int64>(iNormal)] = vertexBuffer[iNormal];
-        vertexNormalDisplay[(2 * static_cast<__int64>(iNormal)) + 1] = vertexBuffer[iNormal] + normal;
+        vertex_normal_display_[2 * static_cast<__int64>(iNormal)] = vertex_buffer_[iNormal];
+        vertex_normal_display_[(2 * static_cast<__int64>(iNormal)) + 1] = vertex_buffer_[iNormal] + normal;
     }
 }
 
 GLfloat& Mesh::getNormalLength()
 {
-    return normalLength;
+    return normal_length_;
 }
 
 void Mesh::setNormalLength(GLfloat nLength)
 {
-    normalLength = nLength;
+    normal_length_ = nLength;
 }
 
 void Mesh::clearVertexUVs()
 {
-    vertexUVs.clear();
+    vertex_uv_.clear();
 }
 
 int Mesh::calcUVs(UVType uvType, bool posEntity)
@@ -397,20 +397,20 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
     int rFlag = -1;
 
     // clear any existing UV
-    vertexUVs.clear();
+    vertex_uv_.clear();
 
 
     glm::vec3 delta = getModelScale();
     glm::vec3 centroidVec = glm::vec3(0.f);
 
-    for (int nVertex = 0; nVertex < vertexBuffer.size(); ++nVertex)
+    for (int nVertex = 0; nVertex < vertex_buffer_.size(); ++nVertex)
     {
-        glm::vec3 V = vertexBuffer[nVertex];
+        glm::vec3 V = vertex_buffer_[nVertex];
         glm::vec2 uv(0.0f);
 
-        glm::vec3 normVertex = glm::vec3((V.x - boundingBox[0].x) / delta.x,
-                                         (V.y - boundingBox[0].y) / delta.y,
-                                         (V.z - boundingBox[0].z) / delta.z);
+        glm::vec3 normVertex = glm::vec3((V.x - bounding_box_[0].x) / delta.x,
+                                         (V.y - bounding_box_[0].y) / delta.y,
+                                         (V.z - bounding_box_[0].z) / delta.z);
         if (posEntity)
             centroidVec = V;//getCentroidVector(V);
         else
@@ -436,7 +436,7 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
             z = centroidVec.y;
 
             uv.x = 1 - theta / 360.f;
-            uv.y = (z - boundingBox[0].y) / (boundingBox[1].y - boundingBox[0].y);
+            uv.y = (z - bounding_box_[0].y) / (bounding_box_[1].y - bounding_box_[0].y);
             break;
 
         case UVType::SPHERICAL_UV:
@@ -454,7 +454,7 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
             break;
         }
 
-        vertexUVs.push_back(uv);
+        vertex_uv_.push_back(uv);
     }
 
     return rFlag;

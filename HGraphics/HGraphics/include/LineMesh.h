@@ -27,13 +27,12 @@ public:
     void setupLineMesh();
 
 private:
-    GLuint VAO;
-    GLuint VBO;
-    GLuint EBO;
-    GLuint vertexCount;
+    GLuint vao_;
+    GLuint vbo_;
+    GLuint ebo_;
+    GLuint vertex_count_;
 
-
-    std::vector<glm::vec3> vertexBuffer;
+    std::vector<glm::vec3> vertex_buffer_;
 };
 
 

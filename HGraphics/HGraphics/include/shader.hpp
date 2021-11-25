@@ -23,13 +23,6 @@ End Header ---------------------------------------------------------*/
 class Shader
 {
 public:
-    enum Primitive_Enum
-    {
-        TriangleStrip = 0,
-        Points,
-        LineStrip
-    };
-
     // the program ID
     unsigned m_ID;
 
@@ -58,11 +51,11 @@ public:
     void SetUniform(const std::string& name, const glm::mat3& mat) const;
 
 private:
-    std::string vertexCode;
-    std::string fragmentCode;
-    std::string geometryCode;
-    std::ifstream vShaderFile;
-    std::ifstream fShaderFile;
-    std::ifstream gShaderFile;
+    std::string vertex_code_;
+    std::string fragment_code_;
+    std::string geometry_code_;
+    std::ifstream v_shader_file_;
+    std::ifstream f_shader_file_;
+    std::ifstream g_shader_file_;
 };
 #endif

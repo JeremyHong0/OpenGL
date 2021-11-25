@@ -14,14 +14,14 @@ End Header ---------------------------------------------------------*/
 
 Scene::Scene()
 {
-    _windowWidth = 1280;
-    _windowHeight = 720;
+    window_width_ = 1280;
+    window_height_ = 720;
 }
 
 Scene::Scene(int windowWidth, int windowHeight)
 {
-    _windowHeight = windowHeight;
-    _windowWidth = windowWidth;
+    window_height_ = windowHeight;
+    window_width_ = windowWidth;
 }
 
 Scene::~Scene()

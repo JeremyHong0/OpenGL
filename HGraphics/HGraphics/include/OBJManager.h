@@ -46,6 +46,7 @@ public:
     unsigned int loadTexture(char const* filepath);
 
     GLuint loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType);
+    unsigned int load_cubemap(const std::string& face);
     std::unordered_map<std::string, Mesh*> scene_mesh_;
     std::unordered_map<std::string, LineMesh*> scene_line_mesh_;
 
@@ -65,7 +66,7 @@ private:
     void ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max);
 
     // data members
-    Mesh* _currentMesh;
-    LineMesh* _currLineMesh;
+    Mesh* current_mesh_;
+    LineMesh* cuurent_line_mesh_;
 };
 #endif

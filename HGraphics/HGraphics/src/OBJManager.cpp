@@ -36,7 +36,7 @@ OBJManager::~OBJManager()
 
 void OBJManager::initData()
 {
-    _currentMesh = nullptr;
+    current_mesh_ = nullptr;
     scene_mesh_.clear();
 }
 
@@ -60,7 +60,7 @@ double OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType u
     int rFlag = -1;
 
     if (pMesh)
-        _currentMesh = pMesh;
+        current_mesh_ = pMesh;
     else
         return rFlag;
 
@@ -81,23 +81,23 @@ double OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType u
         rFlag = -1;
         break;
     }
-    int size = _currentMesh->getVertexBufferSize();
+    int size = current_mesh_->getVertexBufferSize();
 
-    glm::vec3 scale = glm::vec3(_currentMesh->getModelScaleRatio());
-    glm::vec3 centroid = glm::vec3(0.f) - _currentMesh->getModelCentroid();
+    glm::vec3 scale = glm::vec3(current_mesh_->getModelScaleRatio());
+    glm::vec3 centroid = glm::vec3(0.f) - current_mesh_->getModelCentroid();
     glm::mat4 model = glm::scale(scale) * glm::translate(centroid);
 
     for (int i = 0; i < size; ++i)
     {
-        _currentMesh->vertexBuffer[i] = glm::vec3(model * glm::vec4(_currentMesh->vertexBuffer[i], 1.f));
+        current_mesh_->vertex_buffer_[i] = glm::vec3(model * glm::vec4(current_mesh_->vertex_buffer_[i], 1.f));
     }
 
     // Now calculate vertex normals
-    _currentMesh->calcVertexNormals(bFlipNormals);
-    _currentMesh->calcUVs(uvType);
-    _currentMesh->setupMesh();
-    _currentMesh->setupVNormalMesh();
-    _currentMesh->setupFNormalMesh();
+    current_mesh_->calcVertexNormals(bFlipNormals);
+    current_mesh_->calcUVs(uvType);
+    current_mesh_->setupMesh();
+    current_mesh_->setupVNormalMesh();
+    current_mesh_->setupFNormalMesh();
 
     return 0;
 }
@@ -120,7 +120,7 @@ unsigned int OBJManager::loadTexture(char const* filepath)
             format = GL_RGBA;
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, 512, 512, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
         glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -155,6 +155,34 @@ GLuint OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool
     return rFlag;
 }
 
+unsigned int OBJManager::load_cubemap(const std::string& face)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    int width, height, nrChannels;
+
+    unsigned char* data = stbi_load(face.c_str(), &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "cubemap texture failed to load" << std::endl;
+        stbi_image_free(data);
+    }
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
 void OBJManager::setupSphere(const std::string& modelName)
 {
     float PI = 3.141596535f;
@@ -178,7 +206,7 @@ void OBJManager::setupSphere(const std::string& modelName)
 
             x = xy * cosf(verticalAngle);
             y = xy * sinf(verticalAngle);
-            mesh->vertexBuffer.emplace_back(glm::vec3(x, y, z));
+            mesh->vertex_buffer_.emplace_back(glm::vec3(x, y, z));
         }
     }
     int f, f2;
@@ -191,15 +219,15 @@ void OBJManager::setupSphere(const std::string& modelName)
         {
             if (i != 0)
             {
-                mesh->vertexIndices.push_back(f);
-                mesh->vertexIndices.push_back(f2);
-                mesh->vertexIndices.push_back(f + 1);
+                mesh->vertex_indices_.push_back(f);
+                mesh->vertex_indices_.push_back(f2);
+                mesh->vertex_indices_.push_back(f + 1);
             }
             if (i != (horizontalCount - 1))
             {
-                mesh->vertexIndices.push_back(f + 1);
-                mesh->vertexIndices.push_back(f2);
-                mesh->vertexIndices.push_back(f2 + 1);
+                mesh->vertex_indices_.push_back(f + 1);
+                mesh->vertex_indices_.push_back(f2);
+                mesh->vertex_indices_.push_back(f2 + 1);
             }
         }
     }
@@ -218,7 +246,7 @@ void OBJManager::setupOrbitLine(const std::string& name, float radius)
     {
         x = (radius * cos(i * twicePi / 100));
         y = (radius * sin(i * twicePi / 100));
-        mesh->vertexBuffer.emplace_back(glm::vec3(x, 0.f, y));
+        mesh->vertex_buffer_.emplace_back(glm::vec3(x, 0.f, y));
     }
     mesh->setupLineMesh();
     scene_line_mesh_.insert(std::pair<std::string, LineMesh*>(name, mesh));
@@ -235,7 +263,7 @@ void OBJManager::setupPlane(const std::string& name)
             float y = 10.f * (static_cast<float>(i) / numSegments - 0.5f);
             float x = 10.f * (static_cast<float>(j) / numSegments - 0.5f);
 
-            mesh->vertexBuffer.emplace_back(glm::vec3(x, y, 0));
+            mesh->vertex_buffer_.emplace_back(glm::vec3(x, y, 0));
         }
     }
 
@@ -249,15 +277,15 @@ void OBJManager::setupPlane(const std::string& name)
             /**idx++ = b;
             *idx++ = b + 1;
             *idx++ = c;*/
-            mesh->vertexIndices.push_back(b);
-            mesh->vertexIndices.push_back(b + 1);
-            mesh->vertexIndices.push_back(c);
+            mesh->vertex_indices_.push_back(b);
+            mesh->vertex_indices_.push_back(b + 1);
+            mesh->vertex_indices_.push_back(c);
             /**idx++ = c;
             *idx++ = b + 1;
             *idx++ = c + 1;*/
-            mesh->vertexIndices.push_back(c);
-            mesh->vertexIndices.push_back(b + 1);
-            mesh->vertexIndices.push_back(c + 1);
+            mesh->vertex_indices_.push_back(c);
+            mesh->vertex_indices_.push_back(b + 1);
+            mesh->vertex_indices_.push_back(c + 1);
         }
     }
     mesh->calcVertexNormals(true);
@@ -285,8 +313,8 @@ int OBJManager::ReadOBJFile_LineByLine(std::string filepath)
         ParseOBJRecord(buffer, min, max);
     }
 
-    _currentMesh->boundingBox[0] = min;
-    _currentMesh->boundingBox[1] = max;
+    current_mesh_->bounding_box_[0] = min;
+    current_mesh_->bounding_box_[1] = max;
 
     return rFlag;
 }
@@ -346,8 +374,8 @@ int OBJManager::ReadOBJFile_BlockIO(std::string filepath)
 
         free(fileContents);
 
-        _currentMesh->boundingBox[0] = min;
-        _currentMesh->boundingBox[1] = max;
+        current_mesh_->bounding_box_[0] = min;
+        current_mesh_->bounding_box_[1] = max;
     }
 
     return rFlag;
@@ -397,7 +425,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
                 max.z = temp;
             z = temp;
 
-            _currentMesh->vertexBuffer.emplace_back(x, y, z);
+            current_mesh_->vertex_buffer_.emplace_back(x, y, z);
         }
             // vertex normals
         else if (token[1] == 'n')
@@ -422,7 +450,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
 
             vNormal[2] = static_cast<GLfloat&&>(atof(token));
 
-            _currentMesh->vertexNormals.push_back(glm::normalize(vNormal));
+            current_mesh_->vertex_normals_.push_back(glm::normalize(vNormal));
         }
 
         break;
@@ -444,9 +472,9 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
         thirdIndex = static_cast<unsigned int&&>(atoi(token) - 1);
 
         // push back first triangle
-        _currentMesh->vertexIndices.push_back(firstIndex);
-        _currentMesh->vertexIndices.push_back(secondIndex);
-        _currentMesh->vertexIndices.push_back(thirdIndex);
+        current_mesh_->vertex_indices_.push_back(firstIndex);
+        current_mesh_->vertex_indices_.push_back(secondIndex);
+        current_mesh_->vertex_indices_.push_back(thirdIndex);
 
         token = strtok(nullptr, delims);
 
@@ -455,9 +483,9 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
             secondIndex = thirdIndex;
             thirdIndex = static_cast<unsigned int&&>(atoi(token) - 1);
 
-            _currentMesh->vertexIndices.push_back(firstIndex);
-            _currentMesh->vertexIndices.push_back(secondIndex);
-            _currentMesh->vertexIndices.push_back(thirdIndex);
+            current_mesh_->vertex_indices_.push_back(firstIndex);
+            current_mesh_->vertex_indices_.push_back(secondIndex);
+            current_mesh_->vertex_indices_.push_back(thirdIndex);
 
             token = strtok(nullptr, delims);
         }

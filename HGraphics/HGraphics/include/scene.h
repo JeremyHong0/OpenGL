@@ -55,7 +55,7 @@ public:
     virtual void ProcessInput(GLFWwindow* pWwindow, double dt);
 
 protected:
-    int _windowHeight, _windowWidth;
+    int window_height_, window_width_;
 
     // Common functionality for all scene
 };
