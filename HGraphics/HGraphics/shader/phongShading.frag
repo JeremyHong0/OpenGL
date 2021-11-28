@@ -176,7 +176,7 @@ void main()
             FragColor = vec4(globalAmbient + fogResult, 1.0);
     }
     else
-        FragColor = vec4(mix(color, fogResult, 0.2), 1.0);
+        FragColor = vec4(mix(color, fogResult, 0.1), 1.0);
 
 }
 

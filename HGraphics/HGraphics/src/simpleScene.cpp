@@ -217,7 +217,6 @@ int SimpleScene::Init()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb_texture_[i], 0);
     }
 
     glGenRenderbuffers(1, &rbo_);
@@ -244,7 +243,7 @@ int SimpleScene::Render()
     glDepthMask(GL_FALSE);
 
     view_ = camera_->GetViewMatrix();
-    projection_ = glm::perspective(glm::radians(camera_->zoom), (float)screen_width_ / (float)screen_height_, 0.1f,
+    projection_ = glm::perspective(glm::radians(camera_->zoom_), (float)screen_width_ / (float)screen_height_, 0.1f,
         100.0f);
     skybox_shader_->use();
     skybox_shader_->SetUniform("view", view_);
@@ -469,9 +468,9 @@ int SimpleScene::Render()
 
         for (int i = 0; i < 6; ++i)
         {
-            glActiveTexture(GL_TEXTURE10 + i);
+            glActiveTexture(GL_TEXTURE4 + i);
             glBindTexture(GL_TEXTURE_2D, fb_texture_[i]);
-            main_shader_->SetUniform("cube[" + std::to_string(i) + "]", 10 + i);
+            main_shader_->SetUniform("cube[" + std::to_string(i) + "]", 4 + i);
         }
         for (int i = 0; i < 6; ++i)
         {
