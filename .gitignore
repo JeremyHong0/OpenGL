@@ -5,7 +5,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -33,3 +32,4 @@
 .vs/
 x64/
 x86/
+Debug

@@ -100,6 +100,12 @@ int SimpleScene::Init()
     obj_manager_.loadOBJFile("models/cube2.obj", "cube2", false, Mesh::UVType::CUBE_MAPPED_UV);
     obj_manager_.loadOBJFile("models/sphere_modified.obj", "sphere_modified", false, Mesh::UVType::CUBE_MAPPED_UV);
 
+    for (auto const& model : obj_manager_.scene_mesh_)
+        loaded_model_name_.emplace_back(model.first);
+
+    obj_manager_.setupSphere("orbitSphere");
+    obj_manager_.setupOrbitLine("orbitLine", orbit_radius_);
+    //obj_manager_.setupPlane("plane");
     obj_manager_.loadOBJFile("models/quad.obj", "quad", false, Mesh::UVType::CUBE_MAPPED_UV);
 
     diff_texture_ = obj_manager_.loadTexture("textures/metal_roof_diff_512x512.png");
@@ -114,17 +120,16 @@ int SimpleScene::Init()
         "textures/back.jpg",
         "textures/front.jpg"
     };
-    for(int i = 0; i < 6; ++i)
-    {
-        cubemap_texture_[i] = obj_manager_.load_cubemap(faces[i]);
-    }
 
-    frame_buffer_cam_[0] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(-1.0f, 0.0f, 0.0f));
-    frame_buffer_cam_[1] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(1.0f, 0.0f, 0.0f));
-    frame_buffer_cam_[2] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.f,0.f,-1.f));
-    frame_buffer_cam_[3] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.f,0.f,1.f));
-    frame_buffer_cam_[4] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, -1.0f));
-    frame_buffer_cam_[5] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, 1.0f));
+    for(int i = 0; i < 6; ++i)
+        cubemap_texture_[i] = obj_manager_.load_cubemap(faces[i]);
+
+    frame_buffer_cam_[Left] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(-1.0f, 0.0f, 0.0f));
+    frame_buffer_cam_[Right] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(1.0f, 0.0f, 0.0f));
+    frame_buffer_cam_[Bottom] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.f,0.f,-1.f));
+    frame_buffer_cam_[Top] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.f,0.f,1.f));
+    frame_buffer_cam_[Back] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, -1.0f));
+    frame_buffer_cam_[Front] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, 1.0f));
 
     std::vector<glm::vec3> skyboxVertices[6];
     std::vector<glm::vec2> skyboxUV;
@@ -134,35 +139,35 @@ int SimpleScene::Init()
     skyboxUV.emplace_back(1, 0);
     skyboxUV.emplace_back(0, 0);
 
-    skyboxVertices[0].emplace_back(-1.0f, -1.0f, 1.0f);
-    skyboxVertices[0].emplace_back(-1.0f, -1.0f, -1.0f);
-    skyboxVertices[0].emplace_back(-1.0f, 1.0f, -1.0f);
-    skyboxVertices[0].emplace_back(-1.0f, 1.0f, 1.0f);
+    skyboxVertices[Left].emplace_back(-1.0f, -1.0f, 1.0f);
+    skyboxVertices[Left].emplace_back(-1.0f, -1.0f, -1.0f);
+    skyboxVertices[Left].emplace_back(-1.0f, 1.0f, -1.0f);
+    skyboxVertices[Left].emplace_back(-1.0f, 1.0f, 1.0f);
 
-    skyboxVertices[1].emplace_back(1.0f, -1.0f, -1.0f);
-    skyboxVertices[1].emplace_back(1.0f, -1.0f, 1.0f);
-    skyboxVertices[1].emplace_back(1.0f, 1.0f, 1.0f);
-    skyboxVertices[1].emplace_back(1.0f, 1.0f, -1.0f);
+    skyboxVertices[Right].emplace_back(1.0f, -1.0f, -1.0f);
+    skyboxVertices[Right].emplace_back(1.0f, -1.0f, 1.0f);
+    skyboxVertices[Right].emplace_back(1.0f, 1.0f, 1.0f);
+    skyboxVertices[Right].emplace_back(1.0f, 1.0f, -1.0f);
 
-    skyboxVertices[2].emplace_back(-1.0f, -1.0f, 1.0f);
-    skyboxVertices[2].emplace_back(1.0f, -1.0f, 1.0f);
-    skyboxVertices[2].emplace_back(1.0f, -1.0f, -1.0f);
-    skyboxVertices[2].emplace_back(-1.0f, -1.0f, -1.0f);
+    skyboxVertices[Bottom].emplace_back(-1.0f, -1.0f, 1.0f);
+    skyboxVertices[Bottom].emplace_back(1.0f, -1.0f, 1.0f);
+    skyboxVertices[Bottom].emplace_back(1.0f, -1.0f, -1.0f);
+    skyboxVertices[Bottom].emplace_back(-1.0f, -1.0f, -1.0f);
 
-    skyboxVertices[3].emplace_back(-1.0f, 1.0f, -1.0f);
-    skyboxVertices[3].emplace_back(1.0f, 1.0f, -1.0f);
-    skyboxVertices[3].emplace_back(1.0f, 1.0f, 1.0f);
-    skyboxVertices[3].emplace_back(-1.0f, 1.0f, 1.0f);
+    skyboxVertices[Top].emplace_back(-1.0f, 1.0f, -1.0f);
+    skyboxVertices[Top].emplace_back(1.0f, 1.0f, -1.0f);
+    skyboxVertices[Top].emplace_back(1.0f, 1.0f, 1.0f);
+    skyboxVertices[Top].emplace_back(-1.0f, 1.0f, 1.0f);
 
-    skyboxVertices[4].emplace_back(1.0f, -1.0f, 1.0f);
-    skyboxVertices[4].emplace_back(-1.0f, -1.0f, 1.0f);
-    skyboxVertices[4].emplace_back(-1.0f, 1.0f, 1.0f);
-    skyboxVertices[4].emplace_back(1.0f, 1.0f, 1.0f);
+    skyboxVertices[Back].emplace_back(1.0f, -1.0f, 1.0f);
+    skyboxVertices[Back].emplace_back(-1.0f, -1.0f, 1.0f);
+    skyboxVertices[Back].emplace_back(-1.0f, 1.0f, 1.0f);
+    skyboxVertices[Back].emplace_back(1.0f, 1.0f, 1.0f);
 
-    skyboxVertices[5].emplace_back(-1.0f, -1.0f, -1.0f);
-    skyboxVertices[5].emplace_back(1.0f, -1.0f, -1.0f);
-    skyboxVertices[5].emplace_back(1.0f, 1.0f, -1.0f);
-    skyboxVertices[5].emplace_back(-1.0f, 1.0f, -1.0f);
+    skyboxVertices[Front].emplace_back(-1.0f, -1.0f, -1.0f);
+    skyboxVertices[Front].emplace_back(1.0f, -1.0f, -1.0f);
+    skyboxVertices[Front].emplace_back(1.0f, 1.0f, -1.0f);
+    skyboxVertices[Front].emplace_back(-1.0f, 1.0f, -1.0f);
 
     glGenVertexArrays(1, &skybox_vao_);
     for (int i = 0; i < 6; ++i)
@@ -180,21 +185,6 @@ int SimpleScene::Init()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skybox_ebo_);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj_manager_.GetMesh("quad")->getIndexBufferSize() * sizeof(glm::ivec3), obj_manager_.GetMesh("quad")->getIndexBuffer(), GL_STATIC_DRAW);
 
-    obj_manager_.setupSphere("orbitSphere");
-    obj_manager_.setupOrbitLine("orbitLine", orbit_radius_);
-    //obj_manager_.setupPlane("plane");
-
-    loaded_model_name_.emplace_back("sphere");
-    loaded_model_name_.emplace_back("bunny_high_poly");
-    loaded_model_name_.emplace_back("bunny");
-    loaded_model_name_.emplace_back("lucy_princeton");
-    loaded_model_name_.emplace_back("rhino");
-    loaded_model_name_.emplace_back("starwars1");
-    loaded_model_name_.emplace_back("4Sphere");
-    loaded_model_name_.emplace_back("cup");
-    loaded_model_name_.emplace_back("cube2");
-    loaded_model_name_.emplace_back("sphere_modified");
-
     loaded_shader_.emplace_back("shader/phongShading");
     loaded_shader_.emplace_back("shader/blinnShading");
     loaded_shader_.emplace_back("shader/phongLighting");
@@ -202,7 +192,6 @@ int SimpleScene::Init()
     current_model_name_ = loaded_model_name_[0];
     current_v_shader_ = loaded_shader_[0] + ".vert";
     current_f_shader_ = loaded_shader_[0] + ".frag";
-
     camera_ = std::make_unique<Camera>(glm::vec3(0.0f, 0.5f, -6.f));
 
     glGenFramebuffers(1, &fbo_);
@@ -618,6 +607,8 @@ void SimpleScene::RenderImGUI()
                 ImGui::GetIO().Framerate);
 
     //Model config
+    const char* loaded_models[] = { "Cylindrical", "Spherical", "Cube", "Planar", "None" };
+
     if (ImGui::CollapsingHeader("Model"))
     {
         static const char* current_item = current_model_name_.c_str();
@@ -1044,6 +1035,10 @@ void SimpleScene::ProcessInput(GLFWwindow* pWwindow, double dt)
         camera_->process_keyboard(Camera::Camera_Movement::CAM_YAW_LEFT, dt);
     if (glfwGetKey(pWwindow, GLFW_KEY_E) == GLFW_PRESS)
         camera_->process_keyboard(Camera::Camera_Movement::CAM_YAW_RIGHT, dt);
+    if (glfwGetKey(pWwindow, GLFW_KEY_F) == GLFW_PRESS)
+        camera_->process_keyboard(Camera::Camera_Movement::CAM_UP, dt);
+    if (glfwGetKey(pWwindow, GLFW_KEY_V) == GLFW_PRESS)
+        camera_->process_keyboard(Camera::Camera_Movement::CAM_DOWN, dt);
     if (glfwGetKey(pWwindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(pWwindow, true);
 }

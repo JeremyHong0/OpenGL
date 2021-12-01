@@ -45,10 +45,10 @@ public:
     void RenderImGUI() override;
 
     void ProcessInput(GLFWwindow* pWwindow, double dt) override;
-
-
 private:
     void initMembers();
+
+    enum CamDirection { Left, Right, Bottom, Top, Back, Front };
 
     std::unique_ptr<Shader> main_shader_;
     std::unique_ptr<Shader> draw_normal_shader_;

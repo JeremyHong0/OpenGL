@@ -35,7 +35,9 @@ public:
         CAM_RIGHT,
         CAM_YAW_LEFT,
         CAM_YAW_RIGHT,
-        CAM_PITCH
+        CAM_PITCH,
+        CAM_UP,
+        CAM_DOWN
     };
 
     glm::vec3 position_;
@@ -54,12 +56,12 @@ public:
         right_ = glm::normalize(glm::cross(front_, world_up_));
     }
 
-    glm::mat4 GetViewMatrix()
+    glm::mat4 GetViewMatrix() const
     {
         return glm::lookAt(position_, position_ + front_, up_);
     }
 
-    glm::vec3 GetPosition()
+    glm::vec3 GetPosition() const
     {
         return position_;
     }
@@ -94,6 +96,10 @@ inline void Camera::process_keyboard(Camera_Movement direction, double deltaTime
         yaw_ += 1.f;
     if (direction == Camera_Movement::CAM_YAW_RIGHT)
         yaw_ -= 1.f;
+    if (direction == Camera_Movement::CAM_UP)
+        position_ += up_ * velocity;
+    if (direction == Camera_Movement::CAM_DOWN)
+        position_ -= up_ * velocity;
     updateCameraVectors();
 }
 #endif
