@@ -46,6 +46,9 @@
     <ClCompile Include="src\LineMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\DeferredScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.h">
@@ -100,6 +103,9 @@
       <Filter>Source Files\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DeferredScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

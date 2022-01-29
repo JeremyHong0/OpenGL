@@ -43,12 +43,16 @@ public:
                        ReadMethod r = ReadMethod::LINE_BY_LINE,
                        GLboolean bFlipNormals = false);
 
-    unsigned int loadTexture(char const* filepath);
+    void loadTexture(char const* filepath, std::string textureName);
+    unsigned int getTexture(const std::string& name);
 
     GLuint loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType);
     unsigned int load_cubemap(const std::string& face);
     std::unordered_map<std::string, Mesh*> scene_mesh_;
     std::unordered_map<std::string, LineMesh*> scene_line_mesh_;
+    std::unordered_map<std::string, unsigned int> textures;
+    std::vector<std::string> loaded_models;
+    
 
     void setupSphere(const std::string& modelName);
     void setupOrbitLine(const std::string& name, float radius);
@@ -69,4 +73,7 @@ private:
     Mesh* current_mesh_;
     LineMesh* cuurent_line_mesh_;
 };
+
+extern OBJManager* OBJ_MANAGER;
+
 #endif

@@ -13,10 +13,14 @@ End Header ---------------------------------------------------------*/
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include "DeferredScene.h"
 #include "scene.h"
 #include "simpleScene.h"
 
-Scene* scene;
+Scene* simple_scene;
+Scene* deferredScene;
+Scene* current_scene;
 GLFWwindow* window;
 const int windowWidth = 1680;
 const int windowHeight = 1050;
@@ -55,18 +59,23 @@ int main()
         return -1;
     }
 
-    scene = new SimpleScene(windowWidth, windowHeight);
+    deferredScene = new DeferredScene(windowWidth, windowHeight);
+    simple_scene = new SimpleScene(windowWidth, windowHeight);
+    simple_scene->LoadAllModels();
 
-    scene->Init();
-    scene->SetupImGUI(window);
+    current_scene = deferredScene;
+
+    current_scene->Init();
+    current_scene->SetupImGUI(window);
 
     while (!glfwWindowShouldClose(window))
     {
         double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        scene->Display();
-        scene->ProcessInput(window, deltaTime);
+
+        current_scene->Display();
+        current_scene->ProcessInput(window, deltaTime);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

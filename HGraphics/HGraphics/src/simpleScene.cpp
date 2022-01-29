@@ -21,8 +21,6 @@ End Header ---------------------------------------------------------*/
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-const char* glsl_version = "#version 400";
-
 SimpleScene::~SimpleScene()
 {
     camera_ = nullptr;
@@ -45,6 +43,24 @@ SimpleScene::SimpleScene(int windowWidth, int windowHeight) :
     screen_width_ = static_cast<float>(windowWidth);
     screen_height_ = static_cast<float>(windowHeight);
 }
+
+void SimpleScene::CleanUp()
+{
+    camera_.reset();
+    main_shader_.reset();
+    draw_normal_shader_.reset();
+    light_sphere_shader_.reset();
+    skybox_shader_.reset();
+    frame_buffer_cam_->reset();
+    loaded_model_name_.clear();
+    loaded_shader_.clear();
+    skyboxUV.clear();
+    skyboxVertices->clear();
+    glDeleteVertexArrays(1, &skybox_vao_);
+    glDeleteBuffers(1, skybox_vbo_pos_);
+    glDeleteBuffers(1, &skybox_vbo_uv_);
+}
+
 
 void SimpleScene::initMembers()
 {
@@ -89,28 +105,9 @@ int SimpleScene::Init()
     skybox_shader_->loadShader("shader/skybox.vert",
         "shader/skybox.frag");
 
-    obj_manager_.loadOBJFile("models/sphere.obj", "sphere", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/bunny_high_poly.obj", "bunny_high_poly", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/bunny.obj", "bunny", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/lucy_princeton.obj", "lucy_princeton", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/rhino.obj", "rhino", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/starwars1.obj", "starwars1", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/4Sphere.obj", "4Sphere", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/cup.obj", "cup", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/cube2.obj", "cube2", false, Mesh::UVType::CUBE_MAPPED_UV);
-    obj_manager_.loadOBJFile("models/sphere_modified.obj", "sphere_modified", false, Mesh::UVType::CUBE_MAPPED_UV);
-
-    for (auto const& model : obj_manager_.scene_mesh_)
-        loaded_model_name_.emplace_back(model.first);
-
-    obj_manager_.setupSphere("orbitSphere");
-    obj_manager_.setupOrbitLine("orbitLine", orbit_radius_);
-    //obj_manager_.setupPlane("plane");
-    obj_manager_.loadOBJFile("models/quad.obj", "quad", false, Mesh::UVType::CUBE_MAPPED_UV);
-
-    diff_texture_ = obj_manager_.loadTexture("textures/metal_roof_diff_512x512.png");
-    spec_texture_ = obj_manager_.loadTexture("textures/metal_roof_spec_512x512.png");
-    grid_texture_ = obj_manager_.loadTexture("textures/grid.png");
+    diff_texture_ = OBJ_MANAGER->getTexture("diffTexture");
+    spec_texture_ = OBJ_MANAGER->getTexture("specTexture");
+    grid_texture_ = OBJ_MANAGER->getTexture("gridTexture");
     std::vector<std::string> faces
     {
         "textures/left.jpg",
@@ -130,9 +127,6 @@ int SimpleScene::Init()
     frame_buffer_cam_[Top] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.f,0.f,1.f));
     frame_buffer_cam_[Back] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, -1.0f));
     frame_buffer_cam_[Front] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-    std::vector<glm::vec3> skyboxVertices[6];
-    std::vector<glm::vec2> skyboxUV;
 
     skyboxUV.emplace_back(0, 1);
     skyboxUV.emplace_back(1, 1);
@@ -189,10 +183,10 @@ int SimpleScene::Init()
     loaded_shader_.emplace_back("shader/blinnShading");
     loaded_shader_.emplace_back("shader/phongLighting");
 
-    current_model_name_ = loaded_model_name_[0];
+    current_model_name_ = OBJ_MANAGER->loaded_models[0];
     current_v_shader_ = loaded_shader_[0] + ".vert";
     current_f_shader_ = loaded_shader_[0] + ".frag";
-    camera_ = std::make_unique<Camera>(glm::vec3(0.0f, 0.5f, -6.f));
+    camera_ = std::make_unique<Camera>(glm::vec3(1.f, 0.5f, -6.f));
 
     glGenFramebuffers(1, &fbo_);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
@@ -261,14 +255,6 @@ int SimpleScene::Render()
     glDepthMask(GL_TRUE);
     main_shader_->use();
 
-    /*model = glm::mat4(1.f);
-    model = glm::translate(glm::vec3(0, -0.5f, 0)) * glm::rotate(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-    normalMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
-    mainShader->SetUniform("model", model);
-    mainShader->SetUniform("normalMatrix", normalMatrix);
-    mainShader->SetUniform("bModel", false);
-    obj_manager_.GetMesh("plane")->render()*/
-
     if (b_show_uv_)
     {
         glActiveTexture(GL_TEXTURE0);
@@ -310,8 +296,8 @@ int SimpleScene::Render()
     main_shader_->SetUniform("bShowReflect", b_show_reflect_);
     main_shader_->SetUniform("bShowRefract", b_show_refract_);
 
-    main_shader_->SetUniform("min_", obj_manager_.GetMesh(current_model_name_)->getMinBound());
-    main_shader_->SetUniform("max_", obj_manager_.GetMesh(current_model_name_)->getMaxBound());
+    main_shader_->SetUniform("min_", OBJ_MANAGER->GetMesh(current_model_name_)->getMinBound());
+    main_shader_->SetUniform("max_", OBJ_MANAGER->GetMesh(current_model_name_)->getMaxBound());
     main_shader_->SetUniform("bModel", true);
 
     for(int i = 0; i < total_light_num_; ++i)
@@ -366,7 +352,7 @@ int SimpleScene::Render()
             main_shader_->SetUniform("Lights[" + std::to_string(i) + "].outer_angle", glm::cos(glm::radians(spot_outer_[i])));
         }
     }
-    obj_manager_.GetMesh(current_model_name_)->render();
+    OBJ_MANAGER->GetMesh(current_model_name_)->render();
 
     if (b_recalc_uv_)
     {
@@ -374,65 +360,65 @@ int SimpleScene::Render()
         {
             if (current_uv_type_ == "None")
             {
-                obj_manager_.GetMesh(current_model_name_)->clearVertexUVs();
-                obj_manager_.GetMesh(current_model_name_)->setupMesh();    
+                OBJ_MANAGER->GetMesh(current_model_name_)->clearVertexUVs();
+                OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
             }
             else if (current_uv_type_ == "Cylindrical")
             {
                 if (b_calc_uv_pos_)
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CYLINDRICAL_UV);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CYLINDRICAL_UV);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
                 else
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CYLINDRICAL_UV, false);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CYLINDRICAL_UV, false);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
             }
             else if (current_uv_type_ == "Spherical")
             {
                 if (b_calc_uv_pos_)
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::SPHERICAL_UV);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::SPHERICAL_UV);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
                 else
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::SPHERICAL_UV, false);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::SPHERICAL_UV, false);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
             }
             else if (current_uv_type_ == "Cube")
             {
                 if (b_calc_uv_pos_)
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CUBE_MAPPED_UV);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CUBE_MAPPED_UV);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
                 else
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CUBE_MAPPED_UV, false);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::CUBE_MAPPED_UV, false);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
             }
             else if (current_uv_type_ == "Planar")
             {
                 if (b_calc_uv_pos_)
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::PLANAR_UV);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::PLANAR_UV);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
                 else
                 {
-                    obj_manager_.GetMesh(current_model_name_)->calcUVs(Mesh::UVType::PLANAR_UV, false);
-                    obj_manager_.GetMesh(current_model_name_)->setupMesh();
+                    OBJ_MANAGER->GetMesh(current_model_name_)->calcUVs(Mesh::UVType::PLANAR_UV, false);
+                    OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
                 }
             }
         }
         else
         {
-            obj_manager_.GetMesh(current_model_name_)->setupMesh();
+            OBJ_MANAGER->GetMesh(current_model_name_)->setupMesh();
             if (current_uv_type_ == "Cylindrical")
                 main_shader_->SetUniform("mappingMode", 0);
             if (current_uv_type_ == "Spherical")
@@ -517,7 +503,7 @@ int SimpleScene::Render()
                 light_sphere_shader_->SetUniform("model", model_);
                 light_sphere_shader_->SetUniform("objectColor", ld_[j]);
 
-                obj_manager_.GetMesh("orbitSphere")->render();
+                OBJ_MANAGER->GetMesh("orbitSphere")->render();
             }
         }
 
@@ -553,7 +539,7 @@ int SimpleScene::Render()
         draw_normal_shader_->SetUniform("view", view_);
         draw_normal_shader_->SetUniform("projection", projection_);
         draw_normal_shader_->SetUniform("color", glm::vec3(0.32f, 0.57f, 0.86f));
-        obj_manager_.GetMesh(current_model_name_)->render(1);
+        OBJ_MANAGER->GetMesh(current_model_name_)->render(1);
     }
     if (b_show_f_normal_)
     {
@@ -562,7 +548,7 @@ int SimpleScene::Render()
         draw_normal_shader_->SetUniform("view", view_);
         draw_normal_shader_->SetUniform("projection", projection_);
         draw_normal_shader_->SetUniform("color", glm::vec3(0.2f, 0.49f, 0.0f));
-        obj_manager_.GetMesh(current_model_name_)->render(2);
+        OBJ_MANAGER->GetMesh(current_model_name_)->render(2);
     }
     if(b_reload_shader_)
     {
@@ -572,7 +558,7 @@ int SimpleScene::Render()
         b_reload_shader_ = false;
     }
 
-    return 0;
+    return Scene::Render();
 }
 
 int SimpleScene::postRender()
@@ -594,10 +580,10 @@ void SimpleScene::SetupImGUI(GLFWwindow* pWwindow)
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(pWwindow, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImGui_ImplOpenGL3_Init("#version 450");
 }
 
-void SimpleScene::RenderImGUI()
+int SimpleScene::RenderImGUI()
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -786,7 +772,7 @@ void SimpleScene::RenderImGUI()
     ImGui::End();
 
     //Light config
-    ImGui::Begin("Light Controls");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+    ImGui::Begin("Light Controls");
     if (ImGui::CollapsingHeader("Light"))
     {
         ImGui::SliderInt("Light Count", &total_light_num_, 1, 16);
@@ -972,7 +958,6 @@ void SimpleScene::RenderImGUI()
                 if (is_selected)
                 {
                     ImGui::SetItemDefaultFocus();
-                    
                 }
             }
             ImGui::EndCombo();
@@ -1019,6 +1004,8 @@ void SimpleScene::RenderImGUI()
         }
     }
     ImGui::End();
+
+    return Scene::RenderImGUI();
 }
 
 void SimpleScene::ProcessInput(GLFWwindow* pWwindow, double dt)
@@ -1042,3 +1029,4 @@ void SimpleScene::ProcessInput(GLFWwindow* pWwindow, double dt)
     if (glfwGetKey(pWwindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(pWwindow, true);
 }
+

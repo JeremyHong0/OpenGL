@@ -42,9 +42,11 @@ public:
     int postRender() override;
 
     void SetupImGUI(GLFWwindow* pWwindow) override;
-    void RenderImGUI() override;
+    int RenderImGUI() override;
 
     void ProcessInput(GLFWwindow* pWwindow, double dt) override;
+    void CleanUp() override;
+
 private:
     void initMembers();
 
@@ -144,6 +146,8 @@ private:
     GLuint skybox_vbo_pos_[6];
     GLuint skybox_vbo_uv_;
     GLuint skybox_ebo_;
+    std::vector<glm::vec3> skyboxVertices[6];
+    std::vector<glm::vec2> skyboxUV;
 
     enum eLightTypes
     {

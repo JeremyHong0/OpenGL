@@ -24,20 +24,27 @@ End Header ---------------------------------------------------------*/
 
 #include "stb_image.h"
 
+OBJManager* OBJ_MANAGER = nullptr;
+
 OBJManager::OBJManager()
 {
+    assert(OBJ_MANAGER == nullptr && "You can create obj manager only once!");
+    OBJ_MANAGER = this;
     initData();
 }
 
 OBJManager::~OBJManager()
 {
     initData();
+    OBJ_MANAGER = nullptr;
 }
 
 void OBJManager::initData()
 {
     current_mesh_ = nullptr;
     scene_mesh_.clear();
+    scene_line_mesh_.clear();
+    loaded_models.clear();
 }
 
 Mesh* OBJManager::GetMesh(const std::string& name)
@@ -102,7 +109,7 @@ double OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType u
     return 0;
 }
 
-unsigned int OBJManager::loadTexture(char const* filepath)
+void OBJManager::loadTexture(char const* filepath, std::string textureName)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -129,6 +136,8 @@ unsigned int OBJManager::loadTexture(char const* filepath)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+        textures.insert(std::pair<std::string, unsigned int>(textureName, textureID));
+
         stbi_image_free(data);
     }
     else
@@ -136,8 +145,13 @@ unsigned int OBJManager::loadTexture(char const* filepath)
         std::cout << "Texture failed to load at path: " << filepath << std::endl;
         stbi_image_free(data);
     }
+}
 
-    return textureID;
+unsigned int OBJManager::getTexture(const std::string& name)
+{
+    if (textures.find(name) == textures.end())
+        return -1;
+    return textures[name];
 }
 
 GLuint OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType)
@@ -148,6 +162,7 @@ GLuint OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool
     if (ReadOBJFile(fileName, mesh, uvType, OBJManager::ReadMethod::LINE_BY_LINE, bNormalFlag) != 1.0)
     {
         scene_mesh_.insert(std::pair<std::string, Mesh*>(modelName, mesh));
+        loaded_models.emplace_back(modelName);
     }
     else
         delete mesh;

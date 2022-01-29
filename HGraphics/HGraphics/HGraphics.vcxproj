@@ -26,6 +26,7 @@
     <ClCompile Include="..\includes\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\includes\imgui\imgui_widgets.cpp" />
     <ClCompile Include="lib\ImGuiFileDialog\ImGuiFileDialog.cpp" />
+    <ClCompile Include="src\DeferredScene.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\LineMesh.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -45,6 +46,7 @@
     <ClInclude Include="..\includes\imgui\imstb_textedit.h" />
     <ClInclude Include="..\includes\imgui\imstb_truetype.h" />
     <ClInclude Include="include\Camera.h" />
+    <ClInclude Include="include\DeferredScene.h" />
     <ClInclude Include="include\LineMesh.h" />
     <ClInclude Include="include\mesh.h" />
     <ClInclude Include="include\OBJManager.h" />
@@ -136,7 +138,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>6387;6011;</DisableSpecificWarnings>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,7 +156,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996;6387;6011;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -171,7 +173,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>6387;6011;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -189,7 +191,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996;6387;6011;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

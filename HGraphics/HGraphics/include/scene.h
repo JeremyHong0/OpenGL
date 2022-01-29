@@ -25,6 +25,8 @@ public:
     Scene(int windowWidth, int windowHeight);
     virtual ~Scene();
 
+    void LoadAllModels();
+
     // Public methods
 
     // Init: called once when the scene is initialized
@@ -50,7 +52,7 @@ public:
 
     // ImGUI stuff
     virtual void SetupImGUI(GLFWwindow* pWwindow);
-    virtual void RenderImGUI();
+    virtual int RenderImGUI();
 
     virtual void ProcessInput(GLFWwindow* pWwindow, double dt);
 
