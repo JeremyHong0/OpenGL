@@ -2,8 +2,6 @@
 
 ![](.github/images/reflection_demo.jpg)
 ![](.github/images/reflect_refract_demo.jpg)
-![](.github/images/refract_demo.jpg)
-![](.github/images/refract_demo1.jpg)
 
 ![](.github/images/demo.gif)
 
@@ -13,4 +11,5 @@
 * Created custom data pipeline for model, shader, and texture loading
 * Implemented custom UV mapping & normal calculation.
 * Implemented blinn/phong shading model with multiple light effects
+* Implemented deferred shading 
 * Supports fully functioning GUI features with ImGui
