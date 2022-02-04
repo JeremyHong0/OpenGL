@@ -45,7 +45,6 @@ public:
     int RenderImGUI() override;
 
     void ProcessInput(GLFWwindow* pWwindow, double dt) override;
-    void CleanUp() override;
 
 private:
     void initMembers();

@@ -49,6 +49,9 @@
     <ClCompile Include="src\DeferredScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="include\CrashHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.h">
@@ -106,6 +109,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\DeferredScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CrashHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

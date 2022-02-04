@@ -23,11 +23,11 @@ End Header ---------------------------------------------------------*/
 
 SimpleScene::~SimpleScene()
 {
-    camera_ = nullptr;
-    main_shader_ = nullptr;
-    draw_normal_shader_ = nullptr;
+    
     loaded_model_name_.clear();
     loaded_shader_.clear();
+    skyboxUV.clear();
+    skyboxVertices->clear();
     initMembers();
     glDeleteVertexArrays(1, &skybox_vao_);
     glDeleteBuffers(1, skybox_vbo_pos_);
@@ -44,31 +44,16 @@ SimpleScene::SimpleScene(int windowWidth, int windowHeight) :
     screen_height_ = static_cast<float>(windowHeight);
 }
 
-void SimpleScene::CleanUp()
+void SimpleScene::initMembers()
 {
+    angle_of_rotation_ = 0.0f;
+    orbit_radius_ = 2.5f;
     camera_.reset();
     main_shader_.reset();
     draw_normal_shader_.reset();
     light_sphere_shader_.reset();
     skybox_shader_.reset();
     frame_buffer_cam_->reset();
-    loaded_model_name_.clear();
-    loaded_shader_.clear();
-    skyboxUV.clear();
-    skyboxVertices->clear();
-    glDeleteVertexArrays(1, &skybox_vao_);
-    glDeleteBuffers(1, skybox_vbo_pos_);
-    glDeleteBuffers(1, &skybox_vbo_uv_);
-}
-
-
-void SimpleScene::initMembers()
-{
-    angle_of_rotation_ = 0.0f;
-    orbit_radius_ = 2.5f;
-    camera_ = nullptr;
-    main_shader_ = nullptr;
-    draw_normal_shader_ = nullptr;
     b_show_v_normal_ = false;
     b_show_f_normal_ = false;
     b_reload_shader_ = false;

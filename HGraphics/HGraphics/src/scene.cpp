@@ -50,7 +50,6 @@ void Scene::LoadAllModels()
     OBJ_MANAGER->loadOBJFile("models/quad.obj", "quad", false, Mesh::UVType::CUBE_MAPPED_UV);
     OBJ_MANAGER->setupSphere("orbitSphere");
     OBJ_MANAGER->setupOrbitLine("orbitLine", 2.5f);
-    OBJ_MANAGER->setupPlane("plane");
     OBJ_MANAGER->loadTexture("textures/metal_roof_diff_512x512.png", "diffTexture");
     OBJ_MANAGER->loadTexture("textures/metal_roof_spec_512x512.png", "specTexture");
     OBJ_MANAGER->loadTexture("textures/grid.png", "gridTexture");

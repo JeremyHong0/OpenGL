@@ -17,6 +17,7 @@ End Header ---------------------------------------------------------*/
 #include "DeferredScene.h"
 #include "scene.h"
 #include "simpleScene.h"
+#include "CrashHandler.h"
 
 Scene* simple_scene;
 Scene* deferredScene;
@@ -52,12 +53,14 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    CrashHandler::catchStackOverflow();
+    SetUnhandledExceptionFilter(CrashHandler::WriteDump);
 
     deferredScene = new DeferredScene(windowWidth, windowHeight);
     simple_scene = new SimpleScene(windowWidth, windowHeight);

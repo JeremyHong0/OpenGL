@@ -67,7 +67,7 @@ void DeferredScene::initMembers()
     bRotate = true;
     bCalcUVatGPU = true;
     normalSize = 0.2f;
-    lightNum = 1;
+    lightNum = 5;
     diff_texture_ = 0;
     spec_texture_ = 0;
     diffMap = 0;
@@ -88,7 +88,6 @@ void DeferredScene::initMembers()
 
 int DeferredScene::Init()
 {
-    std::cout << "simple scene init\n";
     mainShader = std::make_unique<Shader>();
     drawNormalShader = std::make_unique<Shader>();
     lightSphereShader = std::make_unique<Shader>();
@@ -150,7 +149,7 @@ int DeferredScene::Init()
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    camera_ = std::make_unique<Camera>(glm::vec3(0.0f, 1.9f, -8.f));
+    camera_ = std::make_unique<Camera>(glm::vec3(0.0f, 1.f, -6.f));
     mainShader->use();
     mainShader->SetUniform("gPosition", 0);
     mainShader->SetUniform("gNormal", 1);
@@ -220,9 +219,15 @@ int DeferredScene::Render()
     OBJ_MANAGER->GetMesh(currentModelName)->render();
 
     model = glm::mat4(1.f);
-    model = glm::translate(glm::vec3(0, -0.5f, 0)) * glm::rotate(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+    model = glm::translate(glm::vec3(0, -0.5f, 0)) * glm::rotate(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f))
+    * glm::scale(glm::vec3(5, 5, 1));
     defferedShader->SetUniform("model", model);
-    OBJ_MANAGER->GetMesh("plane")->render();
+    OBJ_MANAGER->GetMesh("quad")->render();
+
+    model = glm::mat4(1.f);
+    model = glm::translate(glm::vec3(0.f, 0.3f, 0.f));
+    defferedShader->SetUniform("model", model);
+    OBJ_MANAGER->GetLineMesh("orbitLine")->render();
 
     lightSphereShader->use();
     lightSphereShader->SetUniform("view", view);
@@ -240,7 +245,6 @@ int DeferredScene::Render()
 
         OBJ_MANAGER->GetMesh("orbitSphere")->render();
     }
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
