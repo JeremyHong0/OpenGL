@@ -5,6 +5,10 @@
 
 ![](.github/images/demo.gif)
 
+How to build:
+* Run `RunCMake.bat` file.
+* Launch `.sln` file on `build_MSVC` dir.
+
 3D Graphics Framework:
 
 * Made with OpenGL 4.5 and C++
