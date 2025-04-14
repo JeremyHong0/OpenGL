@@ -208,32 +208,32 @@ GLuint* Mesh::getIndexBuffer()
     return vertex_indices_.data();
 }
 
-unsigned int Mesh::getVertexBufferSize()
+unsigned int Mesh::getVertexBufferSize() const
 {
     return (unsigned int)vertex_buffer_.size();
 }
 
-unsigned int Mesh::getIndexBufferSize()
+unsigned int Mesh::getIndexBufferSize() const
 {
     return (unsigned int)vertex_indices_.size();
 }
 
-unsigned int Mesh::getTriangleCount()
+unsigned int Mesh::getTriangleCount() const
 {
     return getIndexBufferSize() / 3;
 }
 
-unsigned int Mesh::getVertexCount()
+unsigned int Mesh::getVertexCount() const
 {
     return getVertexBufferSize();
 }
 
-unsigned int Mesh::getVertexNormalCount()
+unsigned int Mesh::getVertexNormalCount() const
 {
     return (unsigned int)vertex_normal_display_.size();
 }
 
-glm::vec3 Mesh::getModelScale()
+glm::vec3 Mesh::getModelScale() const
 {
     glm::vec3 scale = bounding_box_[1] - bounding_box_[0];
 
@@ -249,17 +249,17 @@ glm::vec3 Mesh::getModelScale()
     return scale;
 }
 
-glm::vec3 Mesh::getModelCentroid()
+glm::vec3 Mesh::getModelCentroid() const
 {
     return glm::vec3(bounding_box_[0] + bounding_box_[1]) * 0.5f;
 }
 
-glm::vec3 Mesh::getCentroidVector(glm::vec3 vVertex)
+glm::vec3 Mesh::getCentroidVector(glm::vec3 vVertex) const
 {
     return glm::normalize(vVertex - getModelCentroid());
 }
 
-float Mesh::getModelScaleRatio()
+float Mesh::getModelScaleRatio() const
 {
     glm::vec3 scale = bounding_box_[1] - bounding_box_[0];
     float result = 0.f;
@@ -268,12 +268,12 @@ float Mesh::getModelScaleRatio()
     return 1.f / (result);
 }
 
-glm::vec3 Mesh::getMinBound()
+glm::vec3 Mesh::getMinBound() const
 {
     return bounding_box_[0];
 }
 
-glm::vec3 Mesh::getMaxBound()
+glm::vec3 Mesh::getMaxBound() const
 {
     return bounding_box_[1];
 }
@@ -391,7 +391,7 @@ void Mesh::calcVertexNormalsForDisplay()
     }
 }
 
-GLfloat& Mesh::getNormalLength()
+GLfloat Mesh::getNormalLength() const
 {
     return normal_length_;
 }
@@ -471,35 +471,35 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
         vertex_uv_.push_back(uv);
     }
 
-    unsigned int index = 0;
-    for (; index < vertex_indices_.size();)
-    {
-        GLuint a = vertex_indices_.at(index++);
-        GLuint b = vertex_indices_.at(index++);
-        GLuint c = vertex_indices_.at(index++);
+    //unsigned int index = 0;
+    //for (; index < vertex_indices_.size();)
+    //{
+    //    GLuint a = vertex_indices_.at(index++);
+    //    GLuint b = vertex_indices_.at(index++);
+    //    GLuint c = vertex_indices_.at(index++);
 
-        glm::vec3 vA = vertex_buffer_[a];
-        glm::vec3 vB = vertex_buffer_[b];
-        glm::vec3 vC = vertex_buffer_[c];
+    //    glm::vec3 vA = vertex_buffer_[a];
+    //    glm::vec3 vB = vertex_buffer_[b];
+    //    glm::vec3 vC = vertex_buffer_[c];
 
-        glm::vec2 uv0 = vertex_uv_[a];
-        glm::vec2 uv1 = vertex_uv_[b];
-        glm::vec2 uv2 = vertex_uv_[c];
+    //    glm::vec2 uv0 = vertex_uv_[a];
+    //    glm::vec2 uv1 = vertex_uv_[b];
+    //    glm::vec2 uv2 = vertex_uv_[c];
 
-        glm::vec3 deltaPos1 = vB - vA;
-        glm::vec3 deltaPos2 = vC - vA;
+    //    glm::vec3 deltaPos1 = vB - vA;
+    //    glm::vec3 deltaPos2 = vC - vA;
 
-        glm::vec2 deltaUV1 = uv1 - uv0;
-        glm::vec2 deltaUV2 = uv2 - uv0;
+    //    glm::vec2 deltaUV1 = uv1 - uv0;
+    //    glm::vec2 deltaUV2 = uv2 - uv0;
 
-        float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
-        glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
-        //glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
+    //    float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+    //    glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+    //    //glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
 
-        vertex_tangent_.push_back(tangent);
-        vertex_tangent_.push_back(tangent);
-        vertex_tangent_.push_back(tangent);
-    }
+    //    vertex_tangent_.push_back(tangent);
+    //    vertex_tangent_.push_back(tangent);
+    //    vertex_tangent_.push_back(tangent);
+    //}
 
     return rFlag;
 }

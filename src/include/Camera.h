@@ -44,7 +44,7 @@ public:
 
     Camera(glm::vec3 position = glm::vec3(0.f),  glm::vec3 front = glm::vec3(0.f, 0.f, 1.f),
            glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f))
-        : m_Position_(position), front_(front), up_(up), world_up_(up), yaw_(220.f), pitch_(-30.f), movement_speed_(SPEED),
+        : m_Position_(position), front_(front), up_(up), world_up_(up), yaw_(0.f), pitch_(0.f), movement_speed_(SPEED),
           zoom_(ZOOM), mouseSensitivity(0.1f)
     {
         right_ = normalize(cross(front_, world_up_));

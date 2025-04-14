@@ -11,34 +11,22 @@ Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/
 #version 450 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoords;
 
-in vec2 position;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
-uniform mat4 inverseVP;
+out vec2 texCoords;
 
-out vec3 fragPos;
+void main()
+{
+    texCoords = aTexCoords;
+	mat4 view_xy = view;
+	for(int i = 0; i < 3; ++i)
+		view_xy[3][i] = 0.0;
 
-void main() {
-  fragPos = normalize((inverseVP * vec4(position, 1.0, 1.0)).xyz);
-  gl_Position = vec4(position, 1.0, 1.0);
+	vec4 pos = projection * view_xy * vec4(aPos, 1.0);
+	gl_Position = pos.xyww;
 }
-
-// layout (location = 0) in vec3 aPos;
-// layout (location = 1) in vec2 aTexCoords;
-
-// uniform mat4 model;
-// uniform mat4 view;
-// uniform mat4 projection;
-
-// out vec2 texCoords;
-
-// void main()
-// {
-//     texCoords = aTexCoords;
-// 	mat4 view_xy = view;
-// 	for(int i = 0; i < 3; ++i)
-// 		view_xy[3][i] = 0.0;
-
-// 	vec4 pos = projection * view_xy * vec4(aPos, 1.0);
-// 	gl_Position = pos.xyww;
-// }

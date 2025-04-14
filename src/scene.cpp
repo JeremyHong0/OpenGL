@@ -33,27 +33,29 @@ Scene::~Scene()
 
 void Scene::LoadAllModels()
 {
-    OBJ_MANAGER->loadOBJFile("../assets/models/quad.obj", "quad", false, Mesh::UVType::PLANAR_UV);
-    OBJ_MANAGER->loadOBJFile("../assets/models/sponza.obj", "sponza", true, Mesh::UVType::PLANAR_UV);
+    //OBJ_MANAGER->loadOBJFile("../assets/models/sponza.obj", "sponza", true, Mesh::UVType::PLANAR_UV);
 
     //OBJ_MANAGER->ReadSectionFile("models/Power_Plant_Files/Section1.txt");
 
-    /*OBJ_MANAGER->loadOBJFile("models/bunny_high_poly.obj", "bunny_high_poly", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/cube.obj", "cube", true, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/4Sphere.obj", "4Sphere", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/bunny.obj", "bunny", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/cup.obj", "cup", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/cube2.obj", "cube2", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/rhino.obj", "rhino", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/starwars1.obj", "starwars1", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/sphere.obj", "sphere", false, Mesh::UVType::CUBE_MAPPED_UV);
-    OBJ_MANAGER->loadOBJFile("models/sphere_modified.obj", "sphere_modified", false, Mesh::UVType::CUBE_MAPPED_UV);*/
+    OBJ_MANAGER->loadOBJFile("../assets/models/quad.obj", "quad", false, Mesh::UVType::PLANAR_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/sphere.obj", "sphere", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/bunny_high_poly.obj", "bunny_high_poly", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/cube.obj", "cube", true, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/4Sphere.obj", "4Sphere", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/bunny.obj", "bunny", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/cup.obj", "cup", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/cube2.obj", "cube2", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/rhino.obj", "rhino", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/starwars1.obj", "starwars1", false, Mesh::UVType::CUBE_MAPPED_UV);
+    OBJ_MANAGER->loadOBJFile("../assets/models/sphere_modified.obj", "sphere_modified", false, Mesh::UVType::CUBE_MAPPED_UV);
     OBJ_MANAGER->setupSphere("orbitSphere");
     OBJ_MANAGER->setupPlane("plane");
     OBJ_MANAGER->setupOrbitLine("orbitLine", 2.5f);
-    OBJ_MANAGER->loadTexture("../assets/textures/SilkMedieval_512_albedo.png", "albedoTexture");
+    //OBJ_MANAGER->loadTexture("../assets/textures/SilkMedieval_512_albedo.png", "albedoTexture");
     //OBJ_MANAGER->loadTexture("textures/SilkMedieval_512_ao.png", "ambTexture");
-    OBJ_MANAGER->loadTexture("../assets/textures/SilkMedieval_512_normal.png", "normTexture");
+    OBJ_MANAGER->loadTexture("../assets/textures/metal_roof_diff_512x512.png", "diffTexture");
+    OBJ_MANAGER->loadTexture("../assets/textures/metal_roof_spec_512x512.png", "specTexture");
+    //OBJ_MANAGER->loadTexture("../assets/textures/SilkMedieval_512_normal.png", "normTexture");
     OBJ_MANAGER->loadTexture("../assets/textures/grid.png", "gridTexture");
 }
 

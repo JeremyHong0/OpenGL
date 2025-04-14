@@ -80,7 +80,7 @@ int main()
     simple_scene = new SimpleScene(windowWidth, windowHeight);
     simple_scene->LoadAllModels();
 
-    current_scene = deferredScene;
+    current_scene = simple_scene;
 
     current_scene->Init(window);
     current_scene->SetupImGUI(window);

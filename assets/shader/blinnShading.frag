@@ -171,7 +171,7 @@ void main()
     if(bShowRefract == false && bShowReflect == false)
     {
         if(bModel)
-            FragColor = vec4(globalAmbient * Ka + Emissive + fogResult, 1.0);
+            FragColor = vec4(globalAmbient + Ka + Emissive + fogResult, 1.0);
         else
             FragColor = vec4(globalAmbient + fogResult, 1.0);
     }
@@ -399,38 +399,38 @@ vec2 calcCubeMap(vec3 vEntity)
     if (absVec.x >= absVec.y && absVec.x >= absVec.z)
     {
         if(vEntity.x < 0){
-            uv.x = -vEntity.z/absVec.x;
-			planeNum = 0;
+            uv.x = vEntity.z/absVec.x;
+			planeNum = 1;
         }
         else{
-            uv.x = vEntity.z/absVec.x;
-            planeNum = 1;
+            uv.x = -vEntity.z/absVec.x;
+            planeNum = 0;
         }
-        uv.y = vEntity.y/absVec.x;
+        uv.y = -vEntity.y/absVec.x;
     }
     if (absVec.y >= absVec.x && absVec.y >= absVec.z)
     {
         if(vEntity.y < 0){
-            uv.y = -vEntity.z/absVec.y;
-            planeNum = 2;
-        }
-        else{
             uv.y = vEntity.z/absVec.y;
             planeNum = 3;
         }
-        uv.x = vEntity.x/absVec.y;
+        else{
+            uv.y = -vEntity.z/absVec.y;
+            planeNum = 2;
+        }
+        uv.x = -vEntity.x/absVec.y;
     }
     if (absVec.z >= absVec.y && absVec.z >= absVec.x)
     {
         if(vEntity.z < 0){
-            uv.x = vEntity.x/absVec.z;
-            planeNum = 4;
-        }
-        else{
             uv.x = -vEntity.x/absVec.z;
             planeNum = 5;
         }
-        uv.y = vEntity.y/absVec.z;
+        else{
+            uv.x = vEntity.x/absVec.z;
+            planeNum = 4;
+        }
+        uv.y = -vEntity.y/absVec.z;
     }
     return (uv + vec2(1.f)) * 0.5f;
 }

@@ -11,23 +11,12 @@ Author: Elliott Hong <s.hong@digipen.edu>
 Creation date: Sep 29, 2021
 End Header ---------------------------------------------------------*/
 #version 450 core
+out vec4 FragColor;
 
-in vec3 fragPos;
+in vec2 texCoords;
+uniform sampler2D skybox;
 
-uniform samplerCube skybox;
-
-out vec4 fragColor;
-
-void main() {
-	fragColor = texture(skybox, fragPos);
+void main()
+{
+    FragColor = texture(skybox, texCoords);
 }
-
-// out vec4 FragColor;
-
-// in vec2 texCoords;
-// uniform sampler2D skybox;
-
-// void main()
-// {
-//     FragColor = texture(skybox, texCoords);
-// }

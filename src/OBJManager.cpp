@@ -168,15 +168,6 @@ GLuint OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool
     else
         delete mesh;
 
-    /*if (LoadModel(fileName, mesh) != 1)
-    {
-        scene_mesh_.insert(std::pair<std::string, Mesh*>(modelName, mesh));
-        if (modelName != "quad")
-            loaded_models.emplace_back(modelName);
-    }
-    else
-        delete mesh;*/
-
     return rFlag;
 }
 
@@ -386,6 +377,22 @@ int OBJManager::ReadOBJFile_LineByLine(std::string filepath)
     std::ifstream inFile;
     inFile.open(filepath);
 
+    if (!inFile.is_open()) {
+        std::cerr << "Error: could not open file.\n";
+
+        // Now check stream state
+        if (inFile.fail()) {
+            std::cerr << "Stream failbit is set (formatting or open failure).\n";
+        }
+        if (inFile.bad()) {
+            std::cerr << "Stream badbit is set (irrecoverable stream error).\n";
+        }
+        if (inFile.eof()) {
+            std::cerr << "Stream reached EOF unexpectedly.\n";
+        }
+
+        return 1; // You can return your own error code
+    }
     if (inFile.bad() || inFile.eof() || inFile.fail())
         return rFlag;
 

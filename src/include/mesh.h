@@ -35,28 +35,28 @@ public:
 
     GLfloat* getVertexNormalsForDisplay(); // attribute 0
 
-    unsigned int getVertexBufferSize();
-    unsigned int getVertexCount();
-    unsigned int getVertexNormalCount();
+    unsigned int getVertexBufferSize() const;
+    unsigned int getVertexCount() const;
+    unsigned int getVertexNormalCount() const;
 
     // Get vertex index buffer
     GLuint* getIndexBuffer();
-    unsigned int getIndexBufferSize();
-    unsigned int getTriangleCount();
+    unsigned int getIndexBufferSize() const;
+    unsigned int getTriangleCount() const;
 
-    glm::vec3 getModelScale();
-    glm::vec3 getModelCentroid();
-    glm::vec3 getCentroidVector(glm::vec3 vVertex);
-    float getModelScaleRatio();
-    glm::vec3 getMinBound();
-    glm::vec3 getMaxBound();
+    glm::vec3 getModelScale() const;
+    glm::vec3 getModelCentroid() const;
+    glm::vec3 getCentroidVector(glm::vec3 vVertex) const;
+    float getModelScaleRatio() const;
+    glm::vec3 getMinBound() const;
+    glm::vec3 getMaxBound() const;
 
     virtual void render(int Flag = 0) const;
     void setupMesh();
     void setupVNormalMesh();
     void setupFNormalMesh();
 
-    GLfloat& getNormalLength();
+    GLfloat getNormalLength() const;
     void setNormalLength(GLfloat nLength);
 
     void clearVertexUVs();

@@ -171,6 +171,7 @@ int DeferredScene::Init(GLFWwindow* pWwindow)
         "../assets/textures/back.jpg"
     };
 
+    //skyboxTexture = OBJ_MANAGER->load_cubemap(faces);
     skyboxTexture = OBJ_MANAGER->loadCubemap(faces);
 
     camera_ = std::make_unique<Camera>(glm::vec3(4.8f, 6.6f, 7.1f));
