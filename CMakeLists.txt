@@ -31,7 +31,7 @@ add_executable(
 
 # link libraries
 target_link_directories(${PROJECT_NAME} PUBLIC lib)
-target_link_libraries(${PROJECT_NAME} glfw3 assimp-vc142-mtd ${GLFW_LIBRARIES} ${GLAD_LIBRARIES} )
+target_link_libraries(${PROJECT_NAME} glfw3 assimp-vc143-mtd ${GLFW_LIBRARIES} ${GLAD_LIBRARIES} )
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DGLFW_INCLUDE_NONE
                            -DPROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\")
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
@@ -52,6 +52,6 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT H
 add_custom_command(
                 TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_CURRENT_SOURCE_DIR}/lib/assimp-vc142-mtd.dll
+                ${CMAKE_CURRENT_SOURCE_DIR}/lib/assimp-vc143-mtd.dll
                 ${CMAKE_CURRENT_SOURCE_DIR}/build_MSVC
                 )
