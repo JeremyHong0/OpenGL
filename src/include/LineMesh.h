@@ -21,14 +21,14 @@ class LineMesh : public Mesh
 public:
 
     LineMesh();
-    ~LineMesh();
+    ~LineMesh() override;
 
     void render(int bFlag = 0) const override;
     void setupLineMesh();
 
 private:
     GLuint vao_;
-    GLuint vbo_;
+    GLuint vbo_pos_;
     GLuint ebo_;
     GLuint vertex_count_;
 

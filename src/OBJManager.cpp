@@ -45,6 +45,10 @@ void OBJManager::initData()
     scene_mesh_.clear();
     scene_line_mesh_.clear();
     loaded_models.clear();
+    for (auto [key, val] : scene_mesh_)
+        delete val;
+    for (auto [key, val] : scene_line_mesh_)
+        delete val;
 }
 
 Mesh* OBJManager::GetMesh(const std::string& name)
@@ -61,7 +65,7 @@ LineMesh* OBJManager::GetLineMesh(const std::string& name)
     return scene_line_mesh_[name];
 }
 
-int OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType uvType,
+int OBJManager::ReadOBJFile(const std::string& filepath, Mesh* pMesh, Mesh::UVType uvType,
                                ReadMethod r, GLboolean bFlipNormals)
 {
     int rFlag = -1;
@@ -109,7 +113,7 @@ int OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType uvTy
     return rFlag;
 }
 
-void OBJManager::loadTexture(char const* filepath, std::string textureName)
+void OBJManager::loadTexture(char const* filepath, const std::string& textureName)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -154,12 +158,12 @@ unsigned int OBJManager::getTexture(const std::string& name)
     return textures[name];
 }
 
-int OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType)
+int OBJManager::loadOBJFile(const std::string& fileName, const std::string& modelName, bool bNormalFlag, Mesh::UVType uvType)
 {
     int rFlag = 0;
     std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
 
-    if (ReadOBJFile(fileName, mesh.get(), uvType, OBJManager::ReadMethod::LINE_BY_LINE, bNormalFlag) != 1)
+    if (ReadOBJFile(fileName, mesh.get(), uvType, ReadMethod::LINE_BY_LINE, bNormalFlag) != 1)
     {
         scene_mesh_.insert(std::pair<std::string, Mesh*>(modelName, mesh.get()));
         if (modelName != "quad")
@@ -266,13 +270,15 @@ unsigned int OBJManager::load_cubemap(const std::string& face)
 void OBJManager::setupSphere(const std::string& modelName)
 {
     float PI = 3.141596535f;
-    std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
-
     float x, y, z, xy;
     const int verticalCount = 100;
     const int horizontalCount = 100;
     const float verticalStep = 2.f * PI / static_cast<float>(verticalCount);
     const float horizontalStep = PI / static_cast<float>(horizontalCount);
+
+    std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
+    mesh->vertex_buffer_.reserve(verticalCount * horizontalCount);
+    mesh->vertex_indices_.reserve(verticalCount * horizontalCount);
 
     for (int i = 0; i <= horizontalCount; ++i)
     {
@@ -318,14 +324,15 @@ void OBJManager::setupSphere(const std::string& modelName)
 
 void OBJManager::setupOrbitLine(const std::string& name, float radius)
 {
-    float twicePi = 3.14f * 2.f;
+    constexpr int numSegments = 100;
+    constexpr float twicePi = 3.14f * 2.f;
     std::unique_ptr<LineMesh> mesh = std::make_unique<LineMesh>();
-
+    mesh->vertex_buffer_.reserve(numSegments + 1);
     float x, y;
-    for (int i = 0; i <= 100; ++i)
+    for (int i = 0; i <= numSegments; ++i)
     {
-        x = (radius * cos(i * twicePi / 100));
-        y = (radius * sin(i * twicePi / 100));
+        x = (radius * cos(i * twicePi / numSegments));
+        y = (radius * sin(i * twicePi / numSegments));
         mesh->vertex_buffer_.emplace_back(glm::vec3(x, 0.f, y));
     }
     mesh->setupLineMesh();
@@ -334,9 +341,10 @@ void OBJManager::setupOrbitLine(const std::string& name, float radius)
 
 void OBJManager::setupPlane(const std::string& name)
 {
-    int numSegments = 17;
-
+    constexpr int numSegments = 17;
     std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
+    mesh->vertex_buffer_.reserve((numSegments + 1) * (numSegments + 1));
+    mesh->vertex_indices_.reserve(numSegments * numSegments);
 
     for (int i = 0; i < numSegments + 1; i++) { // y
         for (int j = 0; j < numSegments + 1; j++) { // x
@@ -366,10 +374,10 @@ void OBJManager::setupPlane(const std::string& name)
     mesh->calcVertexNormals(true);
     mesh->calcUVs(Mesh::UVType::PLANAR_UV, true);
     mesh->setupMesh();
-    scene_mesh_.insert(std::pair<std::string, Mesh*>(name, mesh.get()));
+    scene_mesh_.insert(std::pair<std::string, Mesh*>(name, mesh.release()));
 }
 
-int OBJManager::ReadOBJFile_LineByLine(std::string filepath)
+int OBJManager::ReadOBJFile_LineByLine(const std::string& filepath)
 {
     int rFlag = -1;
     glm::vec3 min(FLT_MAX, FLT_MAX, FLT_MAX);
@@ -395,7 +403,7 @@ int OBJManager::ReadOBJFile_LineByLine(std::string filepath)
     return rFlag;
 }
 
-int OBJManager::ReadOBJFile_BlockIO(std::string filepath)
+int OBJManager::ReadOBJFile_BlockIO(const std::string& filepath)
 {
     int rFlag = -1;
     long int OneGBinBytes = 1024 * 1024 * 1024 * sizeof(char);
@@ -427,12 +435,20 @@ int OBJManager::ReadOBJFile_BlockIO(std::string filepath)
         const char* delims = "\n\r";
         fileContents = (char*)malloc((unsigned int)sizeof(char) * (count + 1));
         inFile.read(fileContents, count);
+        if (fileContents == nullptr) {
+            std::cerr << "Error: Memory allocation failed for file contents." << std::endl;
+            return rFlag;
+        }
         fileContents[count] = '\0';
 
         rFlag = 1;
 
         // Now parse the obj file
         char* currPtr = fileContents;
+        if (currPtr == nullptr) {
+            std::cerr << "Error: file is null." << std::endl;
+            return rFlag;
+        }
         char* token = strpbrk(currPtr, delims);
 
         while (token != nullptr)
@@ -457,7 +473,7 @@ int OBJManager::ReadOBJFile_BlockIO(std::string filepath)
     return rFlag;
 }
 
-void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
+void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max) const
 {
     const char* delims = " \r\n\t";
     GLfloat x, y, z;
@@ -465,7 +481,8 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
     GLfloat temp;
     GLuint firstIndex, secondIndex, thirdIndex;
 
-    char* token = strtok(buffer, delims);
+    char* context = nullptr; // Declare a context variable for strtok_s
+    char* token = strtok_s(buffer, delims, &context); // Use strtok_s with context
 
     // account for empty lines
     if (token == nullptr)
@@ -477,7 +494,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
         // vertex coordinates
         if (token[1] == '\0')
         {
-            token = strtok(nullptr, delims);
+            token = strtok_s(nullptr, delims, &context);
             temp = static_cast<GLfloat&&>(atof(token));
             if (min.x > temp)
                 min.x = temp;
@@ -485,7 +502,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
                 max.x = temp;
             x = temp;
 
-            token = strtok(nullptr, delims);
+            token = strtok_s(nullptr, delims, &context);
             temp = static_cast<GLfloat&&>(atof(token));
             if (min.y > temp)
                 min.y = temp;
@@ -493,7 +510,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
                 max.y = temp;
             y = temp;
 
-            token = strtok(nullptr, delims);
+            token = strtok_s(nullptr, delims, &context);
             temp = static_cast<GLfloat&&>(atof(token));
             if (min.z > temp)
                 min.z = temp;
@@ -508,41 +525,38 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
         {
             glm::vec3 vNormal;
 
-            token = strtok(nullptr, delims);
+            token = strtok_s(nullptr, delims, &context);
             if (token == nullptr)
                 break;
 
             vNormal[0] = static_cast<GLfloat&&>(atof(token));
-
-            token = strtok(nullptr, delims);
+            token = strtok_s(nullptr, delims, &context);
             if (token == nullptr)
                 break;
 
             vNormal[1] = static_cast<GLfloat&&>(atof(token));
-
-            token = strtok(nullptr, delims);
+            token = strtok_s(nullptr, delims, &context);
             if (token == nullptr)
                 break;
 
             vNormal[2] = static_cast<GLfloat&&>(atof(token));
-
             current_mesh_->vertex_normals_.emplace_back(glm::normalize(vNormal));
         }
 
         break;
 
     case 'f':
-        token = strtok(nullptr, delims);
+        token = strtok_s(nullptr, delims, &context);
         if (token == nullptr)
             break;
         firstIndex = static_cast<unsigned int&&>(atoi(token) - 1);
 
-        token = strtok(nullptr, delims);
+        token = strtok_s(nullptr, delims, &context);
         if (token == nullptr)
             break;
         secondIndex = static_cast<unsigned int&&>(atoi(token) - 1);
 
-        token = strtok(nullptr, delims);
+        token = strtok_s(nullptr, delims, &context);
         if (token == nullptr)
             break;
         thirdIndex = static_cast<unsigned int&&>(atoi(token) - 1);
@@ -552,7 +566,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
         current_mesh_->vertex_indices_.push_back(secondIndex);
         current_mesh_->vertex_indices_.push_back(thirdIndex);
 
-        token = strtok(nullptr, delims);
+        token = strtok_s(nullptr, delims, &context);
 
         while (token != nullptr)
         {
@@ -563,7 +577,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
             current_mesh_->vertex_indices_.push_back(secondIndex);
             current_mesh_->vertex_indices_.push_back(thirdIndex);
 
-            token = strtok(nullptr, delims);
+            token = strtok_s(nullptr, delims, &context);
         }
 
         break;

@@ -35,16 +35,20 @@ Mesh::Mesh()
 Mesh::~Mesh()
 {
     initData();
-    glDeleteBuffers(1, vertex_indices_.data());
-    glDeleteBuffers(1, &vbo_pos_);
-    glDeleteBuffers(1, &vbo_norm_);
-    glDeleteBuffers(1, &ebo_);
+    if(glIsBuffer(vbo_pos_))
+		glDeleteBuffers(1, &vbo_pos_);
+    if (glIsBuffer(vbo_norm_))
+		glDeleteBuffers(1, &vbo_norm_);
+    if (glIsBuffer(ebo_))
+		glDeleteBuffers(1, &ebo_);
+    if(!vertex_indices_.empty())
+		glDeleteBuffers(1, vertex_indices_.data());
+    vertex_indices_.clear();
 }
 
 void Mesh::initData()
 {
     vertex_buffer_.clear();
-    vertex_indices_.clear();
     vertex_uv_.clear();
     vertex_normals_.clear();
     vertex_normal_display_.clear();
@@ -75,7 +79,7 @@ void Mesh::render(int Flag) const
 
 void Mesh::setupMesh()
 {
-    vertex_count_ = (GLuint)vertex_indices_.size();
+    vertex_count_ = static_cast<GLuint>(vertex_indices_.size());
     face_count_ = getTriangleCount() * 2;
 
     glGenVertexArrays(1, &vao_);
@@ -104,13 +108,6 @@ void Mesh::setupMesh()
         glBufferData(GL_ARRAY_BUFFER, vertex_uv_.size() * sizeof(GLfloat) * 2, vertex_uv_.data(), GL_STATIC_DRAW);
     }
 
-    if(!vertex_tangent_.empty())
-    {
-        glGenBuffers(1, &vbo_tangent);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_tangent);
-        glBufferData(GL_ARRAY_BUFFER, vertex_tangent_.size() * sizeof(GLfloat) * 3, vertex_tangent_.data(), GL_STATIC_DRAW);
-    }
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo_pos_);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, static_cast<void*>(0));
@@ -127,13 +124,6 @@ void Mesh::setupMesh()
         glBindBuffer(GL_ARRAY_BUFFER, vbo_uv_);
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, static_cast<void*>(0));
-    }
-
-    if (!vertex_tangent_.empty())
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_tangent);
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, static_cast<void*>(0));
     }
 
     glBindVertexArray(0);
@@ -210,12 +200,12 @@ GLuint* Mesh::getIndexBuffer()
 
 unsigned int Mesh::getVertexBufferSize() const
 {
-    return (unsigned int)vertex_buffer_.size();
+    return static_cast<unsigned>(vertex_buffer_.size());
 }
 
 unsigned int Mesh::getIndexBufferSize() const
 {
-    return (unsigned int)vertex_indices_.size();
+    return static_cast<unsigned>(vertex_indices_.size());
 }
 
 unsigned int Mesh::getTriangleCount() const
@@ -230,21 +220,20 @@ unsigned int Mesh::getVertexCount() const
 
 unsigned int Mesh::getVertexNormalCount() const
 {
-    return (unsigned int)vertex_normal_display_.size();
+    return static_cast<unsigned>(vertex_normal_display_.size());
 }
 
 glm::vec3 Mesh::getModelScale() const
 {
+    constexpr float epsilon = 1e-6f;
     glm::vec3 scale = bounding_box_[1] - bounding_box_[0];
 
-    if (scale.x == 0.0)
-        scale.x = 1.0;
-
-    if (scale.y == 0.0)
-        scale.y = 1.0;
-
-    if (scale.z == 0.0)
-        scale.z = 1.0;
+    if (glm::abs(scale.x) < epsilon)
+        scale.x = 1.0f;
+    if (glm::abs(scale.y) < epsilon)
+        scale.y = 1.0f;
+    if (glm::abs(scale.z) < epsilon)
+        scale.z = 1.0f;
 
     return scale;
 }
@@ -261,9 +250,8 @@ glm::vec3 Mesh::getCentroidVector(glm::vec3 vVertex) const
 
 float Mesh::getModelScaleRatio() const
 {
-    glm::vec3 scale = bounding_box_[1] - bounding_box_[0];
-    float result = 0.f;
-    result = glm::max(scale.x, scale.y);
+    const glm::vec3 scale = bounding_box_[1] - bounding_box_[0];
+    float result = glm::max(scale.x, scale.y);
     result = glm::max(result, scale.z);
     return 1.f / (result);
 }
@@ -282,7 +270,7 @@ struct compareVec
 {
     bool operator()(const glm::vec3& lhs, const glm::vec3& rhs) const
     {
-        glm::highp_bvec3 result = glm::lessThan(lhs, rhs);
+	    const glm::highp_bvec3 result = glm::lessThan(lhs, rhs);
 
         return glm::epsilonEqual(lhs.x, rhs.x, FLT_EPSILON) ?
             (glm::epsilonEqual(lhs.y, rhs.y, FLT_EPSILON) ? (glm::epsilonEqual(lhs.z, rhs.z, FLT_EPSILON) ? false : result.z) : result.y) : result.x;
@@ -311,8 +299,8 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
     setNormalLength(0.1f);
 
     // For every face
-    int index = 0;
-    for (; index < vertex_indices_.size();)
+    size_t index = 0;
+    while (index < vertex_indices_.size())
     {
         GLuint a = vertex_indices_.at(index++);
         GLuint b = vertex_indices_.at(index++);
@@ -329,7 +317,7 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
         glm::vec3 N = glm::normalize(glm::cross(E1, E2));
 
         glm::vec3 faceCenter = (vA + vB + vC) / 3.f;
-        face_centroid_[static_cast<__int64>(static_cast<__int64>(index) / 3 - 1) * 2] = (faceCenter);
+        face_centroid_[(static_cast<__int64>(index) / 3 - 1) * 2] = (faceCenter);
 
         glm::vec3 F1 = vA - faceCenter;
         glm::vec3 F2 = vB - faceCenter;
@@ -338,7 +326,7 @@ int Mesh::calcVertexNormals(GLboolean bFlipNormals)
         if (bFlipNormals)
             fN = fN * -1.0f;
 
-        face_centroid_[static_cast<__int64>(static_cast<__int64>(index) / 3 - 1) * 2 + 1] = (faceCenter) + normal_length_ * fN;
+        face_centroid_[(static_cast<__int64>(index) / 3 - 1) * 2 + 1] = (faceCenter) + normal_length_ * fN;
 
         if (bFlipNormals)
             N = N * -1.0f;
@@ -382,7 +370,7 @@ void Mesh::calcVertexNormalsForDisplay()
     GLuint numVertices = getVertexCount();
     vertex_normal_display_.resize(static_cast<__int64>(numVertices) * 2, glm::vec3(0.0f));
 
-    for (int iNormal = 0; iNormal < vertex_normals_.size(); ++iNormal)
+    for (size_t iNormal = 0; iNormal < vertex_normals_.size(); ++iNormal)
     {
         glm::vec3 normal = vertex_normals_[iNormal] * normal_length_;
 
@@ -413,11 +401,12 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
     // clear any existing UV
     vertex_uv_.clear();
 
-
     glm::vec3 delta = getModelScale();
     glm::vec3 centroidVec = glm::vec3(0.f);
+    size_t vboSize = vertex_buffer_.size();
+    vertex_uv_.reserve(vboSize);
 
-    for (int nVertex = 0; nVertex < vertex_buffer_.size(); ++nVertex)
+    for (size_t nVertex = 0; nVertex < vboSize; ++nVertex)
     {
         glm::vec3 V = vertex_buffer_[nVertex];
         glm::vec2 uv(0.0f);
@@ -443,7 +432,7 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
             break;
 
         case UVType::CYLINDRICAL_UV:
-            theta = glm::degrees(static_cast<float>(glm::atan(centroidVec.z, centroidVec.x)));
+            theta = glm::degrees(glm::atan(centroidVec.z, centroidVec.x));
             theta += 180.0f;
 
             //z = (centroidVec.z + 1.0f) * 0.5f;
@@ -454,7 +443,7 @@ int Mesh::calcUVs(UVType uvType, bool posEntity)
             break;
 
         case UVType::SPHERICAL_UV:
-            theta = glm::degrees(static_cast<float>(glm::atan(centroidVec.z, centroidVec.x)));
+            theta = glm::degrees(glm::atan(centroidVec.z, centroidVec.x));
             theta += 180.0f;
 
             phi = 180.f - acosf(centroidVec.y / centroidVec.length()) * 180.f / acosf(-1);
@@ -510,73 +499,67 @@ glm::vec2 Mesh::calcCubeMap(glm::vec3 vEntity)
     float y = vEntity.y;
     float z = vEntity.z;
 
-    float absX = abs(x);
-    float absY = abs(y);
-    float absZ = abs(z);
+    const float absX = abs(x);
+    const float absY = abs(y);
+    const float absZ = abs(z);
 
-    int isXPositive = x > 0 ? 1 : 0;
-    int isYPositive = y > 0 ? 1 : 0;
-    int isZPositive = z > 0 ? 1 : 0;
+    const bool isXPositive = x > 0 ? 1 : 0;
+    const bool isYPositive = y > 0 ? 1 : 0;
+    const bool isZPositive = z > 0 ? 1 : 0;
 
-    float maxAxis, uc, vc;
+    float uc = 0.f, vc = 0.f;
     glm::vec2 uv = glm::vec2(0.0);
 
     // POSITIVE X
-    if (bool(isXPositive) && (absX >= absY) && (absX >= absZ))
+    if (isXPositive && (absX >= absY) && (absX >= absZ))
     {
         // u (0 to 1) goes from +z to -z
         // v (0 to 1) goes from -y to +y
-        maxAxis = absX;
         uc = -z / absX;
         vc = y / absX;
     }
 
     // NEGATIVE X
-    else if (!bool(isXPositive) && absX >= absY && absX >= absZ)
+    else if (!isXPositive && absX >= absY && absX >= absZ)
     {
         // u (0 to 1) goes from -z to +z
         // v (0 to 1) goes from -y to +y
-        maxAxis = absX;
         uc = z / absX;
         vc = y / absX;
     }
 
     // POSITIVE Y
-    else if (bool(isYPositive) && absY >= absX && absY >= absZ)
+    else if (isYPositive && absY >= absX && absY >= absZ)
     {
         // u (0 to 1) goes from -x to +x
         // v (0 to 1) goes from +z to -z
-        maxAxis = absY;
         uc = x / absY;
         vc = -z / absY;
     }
 
     // NEGATIVE Y
-    else if (!bool(isYPositive) && absY >= absX && absY >= absZ)
+    else if (!isYPositive && absY >= absX && absY >= absZ)
     {
         // u (0 to 1) goes from -x to +x
         // v (0 to 1) goes from -z to +z
-        maxAxis = absY;
         uc = x / absY;
         vc = z / absY;
     }
 
     // POSITIVE Z
-    else if (bool(isZPositive) && absZ >= absX && absZ >= absY)
+    else if (isZPositive && absZ >= absX && absZ >= absY)
     {
         // u (0 to 1) goes from -x to +x
         // v (0 to 1) goes from -y to +y
-        maxAxis = absZ;
         uc = x / absZ;
         vc = y / absZ;
     }
 
     // NEGATIVE Z
-    else if (!bool(isZPositive) && absZ >= absX && absZ >= absY)
+    else if (!isZPositive && absZ >= absX && absZ >= absY)
     {
         // u (0 to 1) goes from +x to -x
         // v (0 to 1) goes from -y to +y
-        maxAxis = absZ;
         uc = -x / absZ;
         vc = y / absZ;
     }

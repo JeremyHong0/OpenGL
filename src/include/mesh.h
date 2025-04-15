@@ -15,7 +15,6 @@ End Header ---------------------------------------------------------*/
 #include <memory>
 #include <string>
 #include <glad/glad.h>
-
 #include <vector>
 #include <glm/glm.hpp>
 
@@ -26,7 +25,7 @@ class Mesh
 public:
     friend class OBJManager;
     Mesh();
-    ~Mesh();
+    virtual ~Mesh();
 
     // Get attribute values buffer
     GLfloat* getVertexBuffer(); // attribute 0
@@ -93,7 +92,6 @@ private:
     GLuint vbo_pos_;
     GLuint vbo_norm_;
     GLuint vbo_uv_;
-    GLuint vbo_tangent;
 
     GLuint ebo_;
 

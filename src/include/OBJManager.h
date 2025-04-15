@@ -41,16 +41,16 @@ public:
     // Read data from a file
     enum class ReadMethod { LINE_BY_LINE, BLOCK_IO };
 
-    int ReadOBJFile(std::string filepath,
+    int ReadOBJFile(const std::string& filepath,
                        Mesh* pMesh, Mesh::UVType uvType,
                        ReadMethod r = ReadMethod::LINE_BY_LINE,
                        GLboolean bFlipNormals = false);
 
-    void loadTexture(char const* filepath, std::string textureName);
+    void loadTexture(char const* filepath, const std::string& textureName);
     unsigned int getTexture(const std::string& name);
     int ReadSectionFile(std::string const& filepath);
 
-    int loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType);
+    int loadOBJFile(const std::string& fileName, const std::string& modelName, bool bNormalFlag, Mesh::UVType uvType);
     unsigned int load_cubemap(const std::string& face);
     std::unordered_map<std::string, Mesh*> scene_mesh_;
     std::unordered_map<std::string, LineMesh*> scene_line_mesh_;
@@ -66,13 +66,13 @@ public:
 private:
 
     // Read OBJ file line by line
-    int ReadOBJFile_LineByLine(std::string filepath);
+    int ReadOBJFile_LineByLine(const std::string& filepath);
 
     // Read the OBJ file in blocks -- works for files smaller than 1GB
-    int ReadOBJFile_BlockIO(std::string filepath);
+    int ReadOBJFile_BlockIO(const std::string& filepath);
 
     // Parse individual OBJ record (one line delimited by '\n')
-    void ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max);
+    void ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max) const;
 
     int LoadModel(std::string const& filepath, Mesh* mesh);
 
