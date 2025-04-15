@@ -33,6 +33,9 @@ SimpleScene::~SimpleScene()
     glDeleteVertexArrays(1, &skybox_vao_);
     glDeleteBuffers(1, skybox_vbo_pos_);
     glDeleteBuffers(1, &skybox_vbo_uv_);
+    glDeleteBuffers(1, &skybox_ebo_);
+    glDeleteBuffers(1, &fbo_);
+    glDeleteBuffers(1, &rbo_);
 }
 
 SimpleScene::SimpleScene(int windowWidth, int windowHeight) :
@@ -93,11 +96,11 @@ int SimpleScene::Init(GLFWwindow* pWindow)
     std::array<std::string, 6> faces = { {
 	    "../assets/textures/left.jpg",
 	    "../assets/textures/right.jpg",
-	    "../assets/textures/top.jpg",
 	    "../assets/textures/bottom.jpg",
+	    "../assets/textures/top.jpg",
 	    "../assets/textures/back.jpg",
 	    "../assets/textures/front.jpg"
-	} };
+    } };
 
     for (int i = 0; i < 6; ++i)
     {
@@ -106,12 +109,12 @@ int SimpleScene::Init(GLFWwindow* pWindow)
 
     frame_buffer_cam_[0] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(-1.0f, 0.0f, 0.0f));
     frame_buffer_cam_[1] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(1.0f, 0.0f, 0.0f));
-    frame_buffer_cam_[3] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.f, 0.f, -1.f));
-    frame_buffer_cam_[2] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.f, 0.f, 1.f));
+    frame_buffer_cam_[2] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.f, 0.f, -1.f));
+    frame_buffer_cam_[3] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.f, 0.f, 1.f));
     frame_buffer_cam_[4] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, -1.0f));
     frame_buffer_cam_[5] = std::make_unique<Camera>(glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    std::array<std::array<glm::vec3, 4>, 6> skyboxVertices = { {
+    const std::array<std::array<glm::vec3, 4>, 6> skyboxVertices = { {
         // Left face
         {{
             {-1.0f, -1.0f,  1.0f},
@@ -140,14 +143,14 @@ int SimpleScene::Init(GLFWwindow* pWindow)
             { 1.0f,  1.0f,  1.0f},
             {-1.0f,  1.0f,  1.0f}
         }},
-        // Front face
+        // Back face
         {{
             { 1.0f, -1.0f,  1.0f},
             {-1.0f, -1.0f,  1.0f},
             {-1.0f,  1.0f,  1.0f},
             { 1.0f,  1.0f,  1.0f}
         }},
-        // Back face
+        // Front face
         {{
             {-1.0f, -1.0f, -1.0f},
             { 1.0f, -1.0f, -1.0f},
@@ -155,7 +158,7 @@ int SimpleScene::Init(GLFWwindow* pWindow)
             {-1.0f,  1.0f, -1.0f}
         }}
     } };
-    std::array<glm::vec2, 4> skyboxUV = { {
+    const std::array<glm::vec2, 4> skyboxUV = { {
 	    {0.0f, 1.0f},
 	    {1.0f, 1.0f},
 	    {1.0f, 0.0f},
@@ -171,7 +174,6 @@ int SimpleScene::Init(GLFWwindow* pWindow)
         glGenBuffers(1, &skybox_vbo_uv_);
         glBindBuffer(GL_ARRAY_BUFFER, skybox_vbo_uv_);
         glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(glm::vec2), skyboxUV.data(), GL_STATIC_DRAW);
-
     }
 
     glGenBuffers(1, &skybox_ebo_);
@@ -432,7 +434,7 @@ int SimpleScene::Render()
     }
 
     //Enviroment mapping
-    if (b_show_reflect_ == true || b_show_refract_ == true)
+    if (b_show_reflect_|| b_show_refract_)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
         main_shader_->use();
@@ -444,7 +446,7 @@ int SimpleScene::Render()
         for (int i = 0; i < 6; ++i)
         {
             glActiveTexture(GL_TEXTURE4 + i);
-            glBindTexture(GL_TEXTURE_2D, cubemap_texture_[i]);
+            glBindTexture(GL_TEXTURE_2D, fb_texture_[i]);
             main_shader_->SetUniform("cube[" + std::to_string(i) + "]", 4 + i);
         }
         for (int i = 0; i < 6; ++i)
@@ -479,6 +481,9 @@ int SimpleScene::Render()
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, cubemap_texture_[j]);
+                if (cubemap_texture_[i] == 0) {
+                    std::cerr << "ERROR::CUBEMAP:: Texture " << i << " is not loaded correctly!" << std::endl;
+                }
 
                 skybox_shader_->SetUniform("skybox", 0);
 
@@ -488,6 +493,23 @@ int SimpleScene::Render()
 
             glEnable(GL_DEPTH_TEST);
             glDepthMask(GL_TRUE);
+
+            light_sphere_shader_->use();
+            light_sphere_shader_->SetUniform("view", envView);
+            light_sphere_shader_->SetUniform("projection", envProj);
+            for (auto j = 0; j < total_light_num_; ++j)
+            {
+                model_ = glm::mat4(1.f);
+                model_ = glm::rotate(angle_of_rotation_, glm::vec3(0.0f, 1.0f, 0.0f)) *
+                    glm::translate(glm::vec3(cosf(glm::radians(360.f / static_cast<float>(total_light_num_) * j)) * orbit_radius_, 0.0f,
+                        sinf(glm::radians(360.f / static_cast<float>(total_light_num_) * j)) * orbit_radius_))
+                    * glm::scale(glm::vec3(0.08f));
+                normal_matrix_ = glm::mat3(glm::transpose(glm::inverse(model_)));
+                light_sphere_shader_->SetUniform("model", model_);
+                light_sphere_shader_->SetUniform("objectColor", ld_[j]);
+
+                obj_manager_.GetMesh("orbitSphere")->render();
+            }
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -642,7 +664,7 @@ int SimpleScene::RenderImGUI()
         ImGui::DragFloat("Mix Ratio", &mix_ratio_, 0.01f, 0.0f, 1.0f, "%f");
 
         const char* refractionMaterials[] = { "Air", "Hydrogen", "Water", "Olive Oil", "Ice",
-            "Quartz", "Diamond", "Acrylic", "Plexiglas","Lucite" };
+            "Quartz", "Diamond", "Sapphire", "Moissanite","Acrylic" };
 
         static int currMaterial = 0;
         if (ImGui::Combo("Refraction Materials", &currMaterial, refractionMaterials, IM_ARRAYSIZE(refractionMaterials)))
@@ -668,7 +690,13 @@ int SimpleScene::RenderImGUI()
                 ratio_ = 1.46f;
                 break;
             case 6:
-                ratio_ = 2.42f;
+                ratio_ = 2.417f;
+                break;
+            case 7:
+                ratio_ = 1.77f;
+                break;
+            case 8:
+                ratio_ = 2.65f;
                 break;
             default:
                 ratio_ = 1.49f;

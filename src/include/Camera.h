@@ -50,7 +50,7 @@ public:
         right_ = normalize(cross(front_, world_up_));
         lastX = 1600 / 2.f;
         lastY = 1200 / 2.f;
-        updateCameraVectors();
+        //updateCameraVectors();
     }
 
     glm::mat4 GetViewMatrix() const

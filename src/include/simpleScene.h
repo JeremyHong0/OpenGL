@@ -98,7 +98,7 @@ private:
     bool b_calc_uv_pos_ = true;
     bool b_show_uv_ = false;
     bool b_show_reflect_ = true;
-    bool b_show_refract_;
+    bool b_show_refract_ = true;
 
     OBJManager obj_manager_;
 
@@ -138,7 +138,6 @@ private:
     std::string current_uv_entity_;
 
     unsigned int fbo_;
-    unsigned int texture_colorbuffer_;
     unsigned int rbo_;
     GLuint fb_texture_[6];
     GLuint skybox_vao_;
