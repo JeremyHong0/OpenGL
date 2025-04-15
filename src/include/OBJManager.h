@@ -41,7 +41,7 @@ public:
     // Read data from a file
     enum class ReadMethod { LINE_BY_LINE, BLOCK_IO };
 
-    double ReadOBJFile(std::string filepath,
+    int ReadOBJFile(std::string filepath,
                        Mesh* pMesh, Mesh::UVType uvType,
                        ReadMethod r = ReadMethod::LINE_BY_LINE,
                        GLboolean bFlipNormals = false);
@@ -50,7 +50,7 @@ public:
     unsigned int getTexture(const std::string& name);
     int ReadSectionFile(std::string const& filepath);
 
-    GLuint loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType);
+    int loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType);
     unsigned int load_cubemap(const std::string& face);
     std::unordered_map<std::string, Mesh*> scene_mesh_;
     std::unordered_map<std::string, LineMesh*> scene_line_mesh_;

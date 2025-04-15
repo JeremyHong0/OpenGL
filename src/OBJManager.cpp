@@ -61,7 +61,7 @@ LineMesh* OBJManager::GetLineMesh(const std::string& name)
     return scene_line_mesh_[name];
 }
 
-double OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType uvType,
+int OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType uvType,
                                ReadMethod r, GLboolean bFlipNormals)
 {
     int rFlag = -1;
@@ -106,7 +106,7 @@ double OBJManager::ReadOBJFile(std::string filepath, Mesh* pMesh, Mesh::UVType u
     current_mesh_->setupVNormalMesh();
     current_mesh_->setupFNormalMesh();
 
-    return 0;
+    return rFlag;
 }
 
 void OBJManager::loadTexture(char const* filepath, std::string textureName)
@@ -150,26 +150,27 @@ void OBJManager::loadTexture(char const* filepath, std::string textureName)
 unsigned int OBJManager::getTexture(const std::string& name)
 {
     if (textures.find(name) == textures.end())
-        return -1;
+        return 0;
     return textures[name];
 }
 
-GLuint OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType)
+int OBJManager::loadOBJFile(std::string fileName, std::string modelName, bool bNormalFlag, Mesh::UVType uvType)
 {
-    const GLuint rFlag = static_cast<GLuint>(-1);
-    Mesh* mesh = new Mesh();
+    int rFlag = 0;
+    std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
 
-    if (ReadOBJFile(fileName, mesh, uvType, OBJManager::ReadMethod::LINE_BY_LINE, bNormalFlag) != 1.0)
+    if (ReadOBJFile(fileName, mesh.get(), uvType, OBJManager::ReadMethod::LINE_BY_LINE, bNormalFlag) != 1)
     {
-        scene_mesh_.insert(std::pair<std::string, Mesh*>(modelName, mesh));
-        if(modelName != "quad")
+        scene_mesh_.insert(std::pair<std::string, Mesh*>(modelName, mesh.get()));
+        if (modelName != "quad")
             loaded_models.emplace_back(modelName);
+        mesh.release();
+        rFlag = 1;
     }
-    else
-        delete mesh;
 
     return rFlag;
 }
+
 
 int OBJManager::ReadSectionFile(std::string const& filepath)
 {
@@ -265,7 +266,7 @@ unsigned int OBJManager::load_cubemap(const std::string& face)
 void OBJManager::setupSphere(const std::string& modelName)
 {
     float PI = 3.141596535f;
-    Mesh* mesh = new Mesh();
+    std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
 
     float x, y, z, xy;
     const int verticalCount = 100;
@@ -312,13 +313,13 @@ void OBJManager::setupSphere(const std::string& modelName)
     }
     mesh->calcVertexNormals(false);
     mesh->setupMesh();
-    scene_mesh_.insert(std::pair<std::string, Mesh*>(modelName, mesh));
+    scene_mesh_.insert(std::pair<std::string, Mesh*>(modelName, mesh.release()));
 }
 
 void OBJManager::setupOrbitLine(const std::string& name, float radius)
 {
     float twicePi = 3.14f * 2.f;
-    LineMesh* mesh = new LineMesh();
+    std::unique_ptr<LineMesh> mesh = std::make_unique<LineMesh>();
 
     float x, y;
     for (int i = 0; i <= 100; ++i)
@@ -328,14 +329,14 @@ void OBJManager::setupOrbitLine(const std::string& name, float radius)
         mesh->vertex_buffer_.emplace_back(glm::vec3(x, 0.f, y));
     }
     mesh->setupLineMesh();
-    scene_line_mesh_.insert(std::pair<std::string, LineMesh*>(name, mesh));
+    scene_line_mesh_.insert(std::pair<std::string, LineMesh*>(name, mesh.release()));
 }
 
 void OBJManager::setupPlane(const std::string& name)
 {
     int numSegments = 17;
 
-    Mesh* mesh = new Mesh();
+    std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>();
 
     for (int i = 0; i < numSegments + 1; i++) { // y
         for (int j = 0; j < numSegments + 1; j++) { // x
@@ -365,7 +366,7 @@ void OBJManager::setupPlane(const std::string& name)
     mesh->calcVertexNormals(true);
     mesh->calcUVs(Mesh::UVType::PLANAR_UV, true);
     mesh->setupMesh();
-    scene_mesh_.insert(std::pair<std::string, Mesh*>(name, mesh));
+    scene_mesh_.insert(std::pair<std::string, Mesh*>(name, mesh.get()));
 }
 
 int OBJManager::ReadOBJFile_LineByLine(std::string filepath)
@@ -377,22 +378,6 @@ int OBJManager::ReadOBJFile_LineByLine(std::string filepath)
     std::ifstream inFile;
     inFile.open(filepath);
 
-    if (!inFile.is_open()) {
-        std::cerr << "Error: could not open file.\n";
-
-        // Now check stream state
-        if (inFile.fail()) {
-            std::cerr << "Stream failbit is set (formatting or open failure).\n";
-        }
-        if (inFile.bad()) {
-            std::cerr << "Stream badbit is set (irrecoverable stream error).\n";
-        }
-        if (inFile.eof()) {
-            std::cerr << "Stream reached EOF unexpectedly.\n";
-        }
-
-        return 1; // You can return your own error code
-    }
     if (inFile.bad() || inFile.eof() || inFile.fail())
         return rFlag;
 
@@ -444,7 +429,7 @@ int OBJManager::ReadOBJFile_BlockIO(std::string filepath)
         inFile.read(fileContents, count);
         fileContents[count] = '\0';
 
-        rFlag = 0;
+        rFlag = 1;
 
         // Now parse the obj file
         char* currPtr = fileContents;
@@ -541,7 +526,7 @@ void OBJManager::ParseOBJRecord(char* buffer, glm::vec3& min, glm::vec3& max)
 
             vNormal[2] = static_cast<GLfloat&&>(atof(token));
 
-            current_mesh_->vertex_normals_.push_back(glm::normalize(vNormal));
+            current_mesh_->vertex_normals_.emplace_back(glm::normalize(vNormal));
         }
 
         break;
@@ -638,14 +623,14 @@ void OBJManager::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         vector.x = mesh->mVertices[i].x;
         vector.y = mesh->mVertices[i].y;
         vector.z = mesh->mVertices[i].z;
-        current_mesh_->vertex_buffer_.push_back(vector);
+        current_mesh_->vertex_buffer_.emplace_back(vector);
         // normals
         if (mesh->HasNormals())
         {
             vector.x = mesh->mNormals[i].x;
             vector.y = mesh->mNormals[i].y;
             vector.z = mesh->mNormals[i].z;
-            current_mesh_->vertex_normals_.push_back(vector);
+            current_mesh_->vertex_normals_.emplace_back(vector);
         }
         // texture coordinates
         if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
@@ -655,7 +640,7 @@ void OBJManager::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
             vec.x = mesh->mTextureCoords[0][i].x;
             vec.y = mesh->mTextureCoords[0][i].y;
-            current_mesh_->vertex_uv_.push_back(vec);
+            current_mesh_->vertex_uv_.emplace_back(vec);
         }
         else
             current_mesh_->vertex_uv_.emplace_back(0.f, 0.f);
@@ -667,7 +652,7 @@ void OBJManager::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         aiFace face = mesh->mFaces[i];
         // retrieve all indices of the face and store them in the indices vector
         for (unsigned int j = 0; j < face.mNumIndices; j++)
-            current_mesh_->vertex_indices_.push_back(face.mIndices[j]);
+            current_mesh_->vertex_indices_.emplace_back(face.mIndices[j]);
     }
 
     current_mesh_->setupMesh();
